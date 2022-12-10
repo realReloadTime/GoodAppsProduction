@@ -29,6 +29,8 @@ class SellAndGive:
             clock.tick(1)
 
     def app_end(self):  # saves all changes
+        self.screen.fill((100, 100, 100))
+        pygame.display.flip()
         pygame.quit()
 
 
