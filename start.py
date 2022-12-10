@@ -24,7 +24,7 @@ class SellAndGive:
             if not running:
                 continue
 
-            self.screen.fill((100, 100, 150))
+            self.screen.fill((31, 204, 255))
             pygame.display.flip()
             clock.tick(1)
 
