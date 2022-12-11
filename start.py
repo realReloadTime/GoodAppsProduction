@@ -11,7 +11,7 @@ class SellAndGive:
         self.screen = pygame.display.set_mode((self.width, self.height))
 
         # менеджер экранов для удобного переключения между ними(список будет расширяться)
-        self.all_screens = ['MainMenu']
+        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site']
 
         # отмечаем выбранный экран
         self.selected_screen = self.all_screens[0]
@@ -68,6 +68,16 @@ class SellAndGive:
                 pygame.draw.rect(self.screen, (255, 50, 50), (text_x - 10, text_y - 10,
                                                                 text_w + 20, text_h + 20), 0)
                 self.screen.blit(text, (text_x, text_y))
+
+            if self.selected_screen == 'NewGameScreen':
+                pass
+
+            if self.selected_screen == 'Desktop':
+                pass
+
+            if self.selected_screen == 'Site':
+                pass
+
             pygame.display.flip()
             clock.tick(1)
 
