@@ -24,8 +24,8 @@ class SellAndGive:
 
         pygame.display.set_caption('Продай и отдай')
         clock = pygame.time.Clock()
-        buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0]]
-        button_location = []
+        buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0], ['Выйти', 0]]  # названия и состояния кнопок
+        button_location = []  # расположение кнопок
         running = True
 
         while running:
@@ -57,15 +57,20 @@ class SellAndGive:
                     text_y = self.height // 3 - text.get_height() // 2 - 20 + i * 200
                     text_w = text.get_width()
                     text_h = text.get_height()
-                    button_location.append([text_x, text_y, text_w, text_h])
+                    if len(button_location) != 4:
+                        button_location.append([text_x, text_y, text_w, text_h])  # запись занимаемых координат кнопкой
                     pygame.draw.rect(self.screen, (255, 150, 150), (text_x - 10, text_y - 10,
                                                                     text_w + 20, text_h + 20), 0)  # фон текста
                     if buttons[i][1] == 0:
-                        pygame.draw.rect(self.screen, (10, 255, 0), (text_x - 10, text_y - 10,
-                                                                     text_w + 20, text_h + 20), 4)  # обводка текста
+                        pygame.draw.rect(self.screen, (10, 255, 0), (text_x - 10,
+                                                                     text_y - 10,
+                                                                     text_w + 20,
+                                                                     text_h + 20), 4)  # безфокусная обводка текста
                     if buttons[i][1] == 1:
-                        pygame.draw.rect(self.screen, (10, 0, 255), (text_x - 10, text_y - 10,
-                                                                     text_w + 20, text_h + 20), 4)  # обводка текста
+                        pygame.draw.rect(self.screen, (10, 0, 255), (text_x - 10,
+                                                                     text_y - 10,
+                                                                     text_w + 20,
+                                                                     text_h + 20), 4)  # фокусная обводка текста
                     self.screen.blit(text, (text_x, text_y))
 
                 font = pygame.font.Font(None, 100)
@@ -74,8 +79,11 @@ class SellAndGive:
                 text_y = self.height - text.get_height() - 20
                 text_w = text.get_width()
                 text_h = text.get_height()
+                if len(button_location) != 4:
+                    button_location.append([text_x, text_y, text_w, text_h])
                 pygame.draw.rect(self.screen, (255, 50, 50), (text_x - 10, text_y - 10,
                                                               text_w + 20, text_h + 20), 0)
+
                 self.screen.blit(text, (text_x, text_y))
 
             if self.selected_screen == 'NewGameScreen':
@@ -88,7 +96,7 @@ class SellAndGive:
                 pass
 
             pygame.display.flip()
-            clock.tick(1)
+            clock.tick(100)
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
         self.screen.fill((100, 100, 100))
