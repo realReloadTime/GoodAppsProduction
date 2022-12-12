@@ -2,7 +2,6 @@
 # Нарисовать фоны для экранов, анимации(не в приоритете)
 # Перенести код отрисовки главного меню в специальную функцию draw_menu
 # Начать разработку дата базы для сохранения данных
-
 import pygame
 from win32api import GetSystemMetrics
 
@@ -37,7 +36,6 @@ class SellAndGive:
 
         while running:
             self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or \
                         event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # выход на кнопку ESC
@@ -53,15 +51,10 @@ class SellAndGive:
                                 buttons[button_location.index([x, y, w, h])][1] = 1
                             else:
                                 buttons[button_location.index([x, y, w, h])][1] = 0
-
-                if event.type == pygame.MOUSEBUTTONDOWN:  # проверка нажатия мыши
-
-                    # нажатие по кнопке выхода
+                if event.type == pygame.MOUSEBUTTONDOWN:
                     if button_location[3][0] <= event.pos[0] <= button_location[3][0] + button_location[3][2] and\
                             button_location[3][1] <= event.pos[1] <= button_location[3][1] + button_location[3][3]:
-                        self.app_end()
                         running = False
-
             if not running:
                 continue
 
