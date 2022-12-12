@@ -24,6 +24,8 @@ class SellAndGive:
 
         pygame.display.set_caption('Продай и отдай')
         clock = pygame.time.Clock()
+        buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0]]
+        button_location = []
         running = True
 
         while running:
@@ -35,8 +37,11 @@ class SellAndGive:
                     running = False
 
                 if event.type == pygame.MOUSEMOTION:
-                    pass
-
+                    for x, y, w, h in button_location:
+                        if x <= event.pos[0] <= x + w and y <= event.pos[1] <= y + h:
+                            buttons[button_location.index([x, y, w, h])][1] = 1
+                        else:
+                            buttons[button_location.index([x, y, w, h])][1] = 0
             if not running:
                 continue
 
@@ -44,19 +49,23 @@ class SellAndGive:
                 menu_background = Background('data/background_menu.png', [0, 0])
                 self.screen.blit(menu_background.image, menu_background.rect)
 
-                buttons = ['Новая игра', 'Продолжить', 'Авторы']
                 for i in range(3):
 
                     font = pygame.font.Font(None, 100)
-                    text = font.render(buttons[i], True, pygame.Color('#FFE594'))  # текст
+                    text = font.render(buttons[i][0], True, pygame.Color('#FFE594'))  # текст
                     text_x = self.width // 2 - text.get_width() // 2 - 50
                     text_y = self.height // 3 - text.get_height() // 2 - 20 + i * 200
                     text_w = text.get_width()
                     text_h = text.get_height()
+                    button_location.append([text_x, text_y, text_w, text_h])
                     pygame.draw.rect(self.screen, (255, 150, 150), (text_x - 10, text_y - 10,
                                                                     text_w + 20, text_h + 20), 0)  # фон текста
-                    pygame.draw.rect(self.screen, (10, 255, 0), (text_x - 10, text_y - 10,
-                                                                 text_w + 20, text_h + 20), 4)  # обводка текста
+                    if buttons[i][1] == 0:
+                        pygame.draw.rect(self.screen, (10, 255, 0), (text_x - 10, text_y - 10,
+                                                                     text_w + 20, text_h + 20), 4)  # обводка текста
+                    if buttons[i][1] == 1:
+                        pygame.draw.rect(self.screen, (10, 0, 255), (text_x - 10, text_y - 10,
+                                                                     text_w + 20, text_h + 20), 4)  # обводка текста
                     self.screen.blit(text, (text_x, text_y))
 
                 font = pygame.font.Font(None, 100)
