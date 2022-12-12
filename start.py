@@ -41,7 +41,7 @@ class SellAndGive:
                 continue
 
             if self.selected_screen == 'MainMenu':  # действия при выборе экрана главного меню(по умолчанию)
-                menu_background = Background('background_menu.png', [0, 0])
+                menu_background = Background('data/background_menu.png', [0, 0])
                 self.screen.blit(menu_background.image, menu_background.rect)
 
                 buttons = ['Новая игра', 'Продолжить', 'Авторы']
@@ -56,7 +56,7 @@ class SellAndGive:
                     pygame.draw.rect(self.screen, (255, 150, 150), (text_x - 10, text_y - 10,
                                                                     text_w + 20, text_h + 20), 0)  # фон текста
                     pygame.draw.rect(self.screen, (10, 255, 0), (text_x - 10, text_y - 10,
-                                                                text_w + 20, text_h + 20), 4)  # обводка текста
+                                                                 text_w + 20, text_h + 20), 4)  # обводка текста
                     self.screen.blit(text, (text_x, text_y))
 
                 font = pygame.font.Font(None, 100)
@@ -66,7 +66,7 @@ class SellAndGive:
                 text_w = text.get_width()
                 text_h = text.get_height()
                 pygame.draw.rect(self.screen, (255, 50, 50), (text_x - 10, text_y - 10,
-                                                                text_w + 20, text_h + 20), 0)
+                                                              text_w + 20, text_h + 20), 0)
                 self.screen.blit(text, (text_x, text_y))
 
             if self.selected_screen == 'NewGameScreen':
