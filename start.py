@@ -5,6 +5,8 @@
 
 import pygame
 from win32api import GetSystemMetrics
+import os
+import sys
 
 
 class SellAndGive:
@@ -33,10 +35,15 @@ class SellAndGive:
 
     def app_running(self):  # старт и работа приложения
         pygame.init()
+        mouse_coords = (0, 0)
 
         pygame.display.set_caption('Продай и отдай')
+        pygame.mouse.set_visible(False)
         clock = pygame.time.Clock()
         running = True
+
+        cursor = load_image('translucent_pixel.png', -1)
+        cursor = pygame.transform.scale(cursor, (40, 50))
 
         while running:
             self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
@@ -48,6 +55,7 @@ class SellAndGive:
                     running = False
 
                 if event.type == pygame.MOUSEMOTION:
+                    mouse_coords = event.pos
 
                     # ограничитель, исключает коллапс с другими экранами
                     if self.selected_screen == self.all_screens[0]:
@@ -83,6 +91,7 @@ class SellAndGive:
             if self.selected_screen == 'Site':
                 pass
 
+            self.screen.blit(cursor, mouse_coords)
             pygame.display.flip()
             clock.tick(100)
 
@@ -151,6 +160,25 @@ class Background(pygame.sprite.Sprite):  # специальный класс д�
         self.image = pygame.image.load(image_file)
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = location
+
+
+def load_image(name, colorkey=None):
+    fullname = os.path.join('data', name)
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+
+    if colorkey is not None:
+        image = image.convert()
+        if colorkey == -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    else:
+        image = image.convert_alpha()
+
+    return image
 
 
 if __name__ == '__main__':
