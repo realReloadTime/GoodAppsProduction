@@ -25,10 +25,11 @@ class SellAndGive:
         self.screen = pygame.display.set_mode((self.width, self.height))
 
         # менеджер экранов для удобного переключения между ними(список будет расширяться)
-        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site']
+        self.all_screens = ['MainMenu', 'NewGameScreen', 'Continue', 'Authors', 'Desktop', 'Site']
 
         # отмечаем выбранный экран
         self.selected_screen = self.all_screens[0]
+        self.start_plot_played = False
 
         # запускаем приложение
         self.app_running()
@@ -75,6 +76,24 @@ class SellAndGive:
                                 self.menu_button_location[3][1] + self.menu_button_location[3][3]:
                             self.app_end()
                             running = False
+                        # нажатие по кнопке Новая Игра
+                        elif self.menu_button_location[0][0] <= event.pos[0] <=\
+                                self.menu_button_location[0][0] + self.menu_button_location[0][2] and\
+                                self.menu_button_location[0][1] <= event.pos[1] <=\
+                                self.menu_button_location[0][1] + self.menu_button_location[0][3]:
+                            self.selected_screen = self.all_screens[1]
+                        # нажатие по кнопке Продолжить
+                        elif self.menu_button_location[1][0] <= event.pos[0] <=\
+                                self.menu_button_location[1][0] + self.menu_button_location[1][2] and\
+                                self.menu_button_location[1][1] <= event.pos[1] <=\
+                                self.menu_button_location[1][1] + self.menu_button_location[1][3]:
+                            self.selected_screen = self.all_screens[2]
+                        # нажатие по кнопке Авторы
+                        elif self.menu_button_location[2][0] <= event.pos[0] <=\
+                                self.menu_button_location[2][0] + self.menu_button_location[2][2] and\
+                                self.menu_button_location[2][1] <= event.pos[1] <=\
+                                self.menu_button_location[2][1] + self.menu_button_location[2][3]:
+                            self.selected_screen = self.all_screens[3]
 
             if not running:
                 continue
@@ -83,7 +102,9 @@ class SellAndGive:
                 self.draw_main_menu()
 
             if self.selected_screen == 'NewGameScreen':
-                pass
+                if not self.start_plot_played:
+                    self.start_plot()
+                    self.start_plot_played = True
 
             if self.selected_screen == 'Desktop':
                 pass
@@ -141,6 +162,54 @@ class SellAndGive:
                                                           text_w + 20, text_h + 20), 0)
 
         self.screen.blit(text, (text_x, text_y))
+
+    def start_plot(self):
+        clock = pygame.time.Clock()
+        plot_text = open('data/plot.txt', mode='r', encoding='utf-8').read().split('FE')
+        for line in plot_text:
+            self.screen.fill((100, 100, 100))
+            true_text = line.split('\n')
+            wait = 0
+            for ind, element in enumerate(true_text):
+                if 'Продай' not in element and\
+                   'овольно' not in element and\
+                   'друга' not in element and\
+                   'жизнь' not in element:
+                    font = pygame.font.Font('data/start_shr.ttf', 50)
+                    text = font.render(element, True, pygame.Color('#FFE594'))  # текст
+                    text_x = self.width // 1.92 - text.get_width() // 2 - 50
+                    text_y = self.height // 7 - text.get_height() // 2 + 50 * ind
+                    text_w = text.get_width()
+                    text_h = text.get_height()
+                elif 'вольно' in element:
+                    font = pygame.font.Font('data/start_shr.ttf', 120)
+                    text = font.render(element, True, pygame.Color('#FFE594'))  # текст
+                    text_x = self.width // 1.92 - text.get_width() // 2 - 50
+                    text_y = self.height // 8 - text.get_height() // 2 + 50 * ind
+                    text_w = text.get_width()
+                    text_h = text.get_height()
+                elif 'друга' in element or 'жизнь' in element:
+                    font = pygame.font.Font('data/start_shr.ttf', 90)
+                    text = font.render(element, True, pygame.Color('#FFE594'))  # текст
+                    text_x = self.width // 1.92 - text.get_width() // 2 - 50
+                    text_y = self.height // 6 - text.get_height() // 2 + 100 * ind
+                    text_w = text.get_width()
+                    text_h = text.get_height()
+                else:
+                    font = pygame.font.Font('data/start_shr.ttf', 200)
+                    text = font.render(element, True, pygame.Color('#FFE594'))  # текст
+                    text_x = self.width // 1.92 - text.get_width() // 2 - 50
+                    text_y = self.height // 3 - text.get_height() // 2 + 50 * ind
+                    text_w = text.get_width()
+                    text_h = text.get_height()
+                self.screen.blit(text, (text_x, text_y))
+                pygame.display.flip()
+                clock.tick(2)
+                wait = ind
+                if element != '\n':
+                    clock.tick(2)
+            for i in range(wait):
+                clock.tick(1)
 
     def starting_screen(self):  # здесь будет рисоваться стартовый экран
         pass
