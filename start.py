@@ -4,6 +4,7 @@
 # Начать разработку дата базы для сохранения данных
 
 import pygame
+from button import Button
 from win32api import GetSystemMetrics
 import os
 import sys
@@ -31,6 +32,12 @@ class SellAndGive:
         self.selected_screen = self.all_screens[0]
         self.start_plot_played = False
 
+        self.buttons_start_group = pygame.sprite.Group()
+        font = pygame.font.Font(None, 100)
+        buttons = ['Начать', 'Попиты', 'Скрепки', 'Строительный мусор']
+        for button in buttons:
+            new_button = Button(button, (200, 50 * buttons.index(button)), self.buttons_start_group)
+
         # запускаем приложение
         self.app_running()
 
@@ -47,8 +54,7 @@ class SellAndGive:
         cursor = pygame.transform.scale(cursor, (40, 50))
 
         while running:
-            self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
-
+            # self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or \
                         event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # выход на кнопку ESC
@@ -69,6 +75,7 @@ class SellAndGive:
                 if event.type == pygame.MOUSEBUTTONDOWN:  # проверка нажатия мыши
 
                     if self.selected_screen == self.all_screens[0]:
+
                         # нажатие по кнопке выхода
                         if self.menu_button_location[3][0] <= event.pos[0] <=\
                                 self.menu_button_location[3][0] + self.menu_button_location[3][2] and\
@@ -76,24 +83,33 @@ class SellAndGive:
                                 self.menu_button_location[3][1] + self.menu_button_location[3][3]:
                             self.app_end()
                             running = False
+
                         # нажатие по кнопке Новая Игра
                         elif self.menu_button_location[0][0] <= event.pos[0] <=\
                                 self.menu_button_location[0][0] + self.menu_button_location[0][2] and\
                                 self.menu_button_location[0][1] <= event.pos[1] <=\
                                 self.menu_button_location[0][1] + self.menu_button_location[0][3]:
                             self.selected_screen = self.all_screens[1]
+
+
                         # нажатие по кнопке Продолжить
                         elif self.menu_button_location[1][0] <= event.pos[0] <=\
                                 self.menu_button_location[1][0] + self.menu_button_location[1][2] and\
                                 self.menu_button_location[1][1] <= event.pos[1] <=\
                                 self.menu_button_location[1][1] + self.menu_button_location[1][3]:
                             self.selected_screen = self.all_screens[2]
+
                         # нажатие по кнопке Авторы
                         elif self.menu_button_location[2][0] <= event.pos[0] <=\
                                 self.menu_button_location[2][0] + self.menu_button_location[2][2] and\
                                 self.menu_button_location[2][1] <= event.pos[1] <=\
                                 self.menu_button_location[2][1] + self.menu_button_location[2][3]:
                             self.selected_screen = self.all_screens[3]
+
+                    if self.selected_screen == self.all_screens[1]:
+                        for sprite in self.buttons_start_group.sprites():
+                            if sprite.clicked(event.pos):
+                                print(sprite.name)
 
             if not running:
                 continue
@@ -105,6 +121,7 @@ class SellAndGive:
                 if not self.start_plot_played:
                     self.start_plot()
                     self.start_plot_played = True
+                self.starting_screen()
 
             if self.selected_screen == 'Desktop':
                 pass
@@ -163,14 +180,19 @@ class SellAndGive:
 
         self.screen.blit(text, (text_x, text_y))
 
-    def start_plot(self):
+    def start_plot(self):  # показ сюжета
         clock = pygame.time.Clock()
+        skip_plot = False
         plot_text = open('data/plot.txt', mode='r', encoding='utf-8').read().split('FE')
-        for line in plot_text:
+        for line in plot_text:  # для каждой страницы ('FE')
             self.screen.fill((100, 100, 100))
             true_text = line.split('\n')
             wait = 0
-            for ind, element in enumerate(true_text):
+            if skip_plot:
+                break
+            for ind, element in enumerate(true_text):  # для каждой строчки
+                if skip_plot:
+                    break
                 if 'Продай' not in element and\
                    'овольно' not in element and\
                    'друга' not in element and\
@@ -206,13 +228,20 @@ class SellAndGive:
                 pygame.display.flip()
                 clock.tick(2)
                 wait = ind
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                        skip_plot = True
                 if element != '\n':
                     clock.tick(2)
             for i in range(wait):
-                clock.tick(1)
+                if not skip_plot:
+                    clock.tick(3)
+                else:
+                    clock.tick(999999)
 
     def starting_screen(self):  # здесь будет рисоваться стартовый экран
-        pass
+        self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
+        self.buttons_start_group.draw(self.screen)
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
         pass
