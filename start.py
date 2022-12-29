@@ -1,10 +1,9 @@
 # ЗАДАЧИ  !!!
 
-# Нарисовать фоны для экранов, анимации(не в приоритете)
 # Начать разработку дата базы для сохранения данных
 
 import pygame
-from button import Button
+from modules import pygame_button, pygame_image
 from win32api import GetSystemMetrics
 import os
 import sys
@@ -36,7 +35,7 @@ class SellAndGive:
         font = pygame.font.Font(None, 100)
         buttons = ['Начать', 'Попиты', 'Скрепки', 'Строительный мусор']
         for button in buttons:
-            new_button = Button(button, (200, 50 * buttons.index(button)), self.buttons_start_group)
+            new_button = pygame_button.Button(button, (200, 200 * buttons.index(button)), self.buttons_start_group)
 
         # запускаем приложение
         self.app_running()
@@ -50,11 +49,10 @@ class SellAndGive:
         clock = pygame.time.Clock()
         running = True
 
-        cursor = load_image('translucent_pixel.png', -1)
+        cursor = pygame_image.load_image('translucent_pixel.png', -1)
         cursor = pygame.transform.scale(cursor, (40, 50))
 
         while running:
-            # self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or \
                         event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # выход на кнопку ESC
@@ -91,7 +89,6 @@ class SellAndGive:
                                 self.menu_button_location[0][1] + self.menu_button_location[0][3]:
                             self.selected_screen = self.all_screens[1]
 
-
                         # нажатие по кнопке Продолжить
                         elif self.menu_button_location[1][0] <= event.pos[0] <=\
                                 self.menu_button_location[1][0] + self.menu_button_location[1][2] and\
@@ -106,6 +103,7 @@ class SellAndGive:
                                 self.menu_button_location[2][1] + self.menu_button_location[2][3]:
                             self.selected_screen = self.all_screens[3]
 
+                    # кнопки на стартовом экране
                     if self.selected_screen == self.all_screens[1]:
                         for sprite in self.buttons_start_group.sprites():
                             if sprite.clicked(event.pos):
@@ -134,7 +132,7 @@ class SellAndGive:
             clock.tick(100)
 
     def draw_main_menu(self):  # перенести сюда простыню из app_running
-        menu_background = Background('data/background_menu.png', [0, 0])
+        menu_background = pygame_image.Background('data/background_menu.png', [0, 0])
         self.screen.blit(menu_background.image, menu_background.rect)
 
         for i in range(3):
@@ -197,28 +195,28 @@ class SellAndGive:
                    'овольно' not in element and\
                    'друга' not in element and\
                    'жизнь' not in element:
-                    font = pygame.font.Font('data/start_shr.ttf', 50)
+                    font = pygame.font.Font('text_fonts/start_shr.ttf', 50)
                     text = font.render(element, True, pygame.Color('#FFE594'))  # текст
                     text_x = self.width // 1.92 - text.get_width() // 2 - 50
                     text_y = self.height // 7 - text.get_height() // 2 + 50 * ind
                     text_w = text.get_width()
                     text_h = text.get_height()
                 elif 'вольно' in element:
-                    font = pygame.font.Font('data/start_shr.ttf', 120)
+                    font = pygame.font.Font('text_fonts/start_shr.ttf', 120)
                     text = font.render(element, True, pygame.Color('#FFE594'))  # текст
                     text_x = self.width // 1.92 - text.get_width() // 2 - 50
                     text_y = self.height // 8 - text.get_height() // 2 + 50 * ind
                     text_w = text.get_width()
                     text_h = text.get_height()
                 elif 'друга' in element or 'жизнь' in element:
-                    font = pygame.font.Font('data/start_shr.ttf', 90)
+                    font = pygame.font.Font('text_fonts/start_shr.ttf', 90)
                     text = font.render(element, True, pygame.Color('#FFE594'))  # текст
                     text_x = self.width // 1.92 - text.get_width() // 2 - 50
                     text_y = self.height // 6 - text.get_height() // 2 + 100 * ind
                     text_w = text.get_width()
                     text_h = text.get_height()
                 else:
-                    font = pygame.font.Font('data/start_shr.ttf', 200)
+                    font = pygame.font.Font('text_fonts/start_shr.ttf', 200)
                     text = font.render(element, True, pygame.Color('#FFE594'))  # текст
                     text_x = self.width // 1.92 - text.get_width() // 2 - 50
                     text_y = self.height // 3 - text.get_height() // 2 + 50 * ind
@@ -240,7 +238,9 @@ class SellAndGive:
                     clock.tick(999999)
 
     def starting_screen(self):  # здесь будет рисоваться стартовый экран
-        self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
+        screen_background = pygame_image.Background('data/computer_prototype.png')
+        self.screen.blit(screen_background.image, screen_background.rect)
+        # self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
         self.buttons_start_group.draw(self.screen)
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
@@ -250,33 +250,6 @@ class SellAndGive:
         self.screen.fill((100, 100, 100))
         pygame.display.flip()
         pygame.quit()
-
-
-class Background(pygame.sprite.Sprite):  # специальный класс для добавления фонового изображения
-    def __init__(self, image_file, location):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(image_file)
-        self.rect = self.image.get_rect()
-        self.rect.left, self.rect.top = location
-
-
-def load_image(name, colorkey=None):
-    fullname = os.path.join('data', name)
-    # если файл не существует, то выходим
-    if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
-    image = pygame.image.load(fullname)
-
-    if colorkey is not None:
-        image = image.convert()
-        if colorkey == -1:
-            colorkey = image.get_at((0, 0))
-        image.set_colorkey(colorkey)
-    else:
-        image = image.convert_alpha()
-
-    return image
 
 
 if __name__ == '__main__':

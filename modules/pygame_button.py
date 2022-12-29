@@ -30,15 +30,15 @@ class Button(pygame.sprite.Sprite):
         self.name = name
         self.image = clear_and_load_image('clear_image.png', -1)
         self.coords = coords
-        font = pygame.font.Font('data/start_shr.ttf', 100)
+        font = pygame.font.Font('text_fonts/start_shr.ttf', 100)
         text_surface = font.render(name, True, pygame.Color('#FFE594'))
-        pygame.transform.scale(self.image, text_surface.get_size())
+        self.image = pygame.transform.scale(self.image, text_surface.get_size())
         self.image.blit(text_surface, (0, 0))
         self.rect = coords
 
     def clicked(self, mouse_pos):
         x, y = mouse_pos
-        if self.coords[0] <= x <= self.coords[0] + self.rect[0] and\
-           self.coords[1] <= y <= self.coords[1] + self.rect[1]:
+        if self.coords[0] <= x <= self.coords[0] + self.image.get_rect()[2] and\
+           self.coords[1] <= y <= self.coords[1] + self.image.get_rect()[3]:
             return True
         return False
