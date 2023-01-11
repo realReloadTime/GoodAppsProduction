@@ -240,7 +240,6 @@ class SellAndGive:
     def starting_screen(self):  # здесь будет рисоваться стартовый экран
         screen_background = pygame_image.Background('data/computer_prototype.png')
         self.screen.blit(screen_background.image, screen_background.rect)
-        # self.screen.fill((31, 204, 255))  # голубой цвет(заглушка для фона)
         self.buttons_start_group.draw(self.screen)
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
