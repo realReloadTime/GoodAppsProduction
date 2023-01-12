@@ -25,15 +25,18 @@ def clear_and_load_image(name, colorkey=None):
 
 
 class Button(pygame.sprite.Sprite):
-    def __init__(self, name, coords, *group):
+    def __init__(self, name, coords, color, *group):
         super().__init__(*group)
+        if color is None:
+            color = '#FFE594'
         self.name = name
         self.image = clear_and_load_image('clear_image.png', -1)
         self.coords = coords
         font = pygame.font.Font('text_fonts/start_shr.ttf', 100)
-        text_surface = font.render(name, True, pygame.Color('#FFE594'))
+        text_surface = font.render(name, True, pygame.Color(color))
         self.image = pygame.transform.scale(self.image, text_surface.get_size())
         self.image.blit(text_surface, (0, 0))
+        self.size = self.image.get_width(), self.image.get_height()
         self.rect = coords
 
     def clicked(self, mouse_pos):

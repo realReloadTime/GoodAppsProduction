@@ -33,9 +33,12 @@ class SellAndGive:
 
         self.buttons_start_group = pygame.sprite.Group()
         font = pygame.font.Font(None, 100)
-        buttons = ['Начать', 'Попиты', 'Скрепки', 'Строительный мусор']
-        for button in buttons:
-            new_button = pygame_button.Button(button, (200, 200 * buttons.index(button)), self.buttons_start_group)
+        start_buttons = [('Начать', (self.width - 300, self.height - 200), '#008000'),
+                   ('Попиты', (200, 200), None),
+                   ('Скрепки', (200, 400), None),
+                   ('Строительный мусор', (200, 600), None)]
+        for button in start_buttons:
+            new_button = pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
         # запускаем приложение
         self.app_running()
@@ -105,9 +108,10 @@ class SellAndGive:
 
                     # кнопки на стартовом экране
                     if self.selected_screen == self.all_screens[1]:
-                        for sprite in self.buttons_start_group.sprites():
-                            if sprite.clicked(event.pos):
-                                print(sprite.name)
+                        for button in self.buttons_start_group.sprites():
+                            if button.clicked(event.pos):
+                                print(button.rect)
+                                pygame.draw.rect(self.screen, pygame.Color(200, 200, 200), (button.rect[0], button.rect[1], button.rect[0] + button.size[0], button.rect[1] + button.size[1]))
 
             if not running:
                 continue
