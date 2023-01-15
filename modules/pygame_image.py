@@ -3,7 +3,7 @@ import os
 import sys
 
 
-class Background(pygame.sprite.Sprite):  # специальный класс для добавления фонового изображения
+class Image(pygame.sprite.Sprite):  # преобразует файл изображения в формат, распознаваемый pygame
     def __init__(self, image_file, location=(0, 0)):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load(image_file)
