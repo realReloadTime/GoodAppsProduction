@@ -44,8 +44,14 @@ class SellAndGive:
                                                          'Можно найти в окрестностях, \nцена за оптовые закупки '
                                                          'средняя\n'
                                                          'Наличие на вашем складе - 7 штук'}
+        self.icons_desktop_group = pygame.sprite.Group()
+        items =
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
+
+        desktop_items = ['data/browser.png']
+        for item in desktop_items:
+            pygame_image.Image(item, resize=True, resize_size=(220, 200), background=False)
 
         self.app_running()
 
@@ -139,6 +145,8 @@ class SellAndGive:
                             else:
                                 button.selected = False
                                 button.tracing = False
+                    if self.selected_screen == self.all_screens[2]:
+                        pass
 
             if not running:
                 continue
@@ -292,7 +300,7 @@ class SellAndGive:
         self.buttons_start_group.draw(self.screen)
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
-        screen_background = pygame_image.Image('data/desktop.png', resize=True)
+        screen_background = pygame_image.Image('data/desktop.png', resize=False)
         self.screen.blit(screen_background.image, screen_background.rect)
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
