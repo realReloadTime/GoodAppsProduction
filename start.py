@@ -29,9 +29,9 @@ class SellAndGive:
         self.buttons_start_clicked = []  # здесь будет последняя нажатая кнопка при начальном выборе товара
         self.start_text_input = pygame_text.InputBox(self.width - 700, 60, 600, 40, 'ООО"ПродАкшен"')
         start_buttons = [('Начать', (self.width - 300, self.height - 200), '#008000'),
-                         ('Попиты', (200, 200), None),
-                         ('Скрепки', (200, 400), None),
-                         ('Строительный мусор', (200, 600), None)]
+                         ('Попиты', (200, 200), '#e55c5c'),
+                         ('Скрепки', (200, 400), '#e55c5c'),
+                         ('Строительный мусор', (200, 600), '#e55c5c')]
         self.start_buttons_info = {'Попиты': 'Самый ходовой товар в вашем городе, \nможно продавать за соответствующую '
                                              'цену\n'
                                              'Делаются в Китае, поэтому \nцена за оптовые закупки высокая,\n'
@@ -120,6 +120,7 @@ class SellAndGive:
                                     and button.name == 'Начать' \
                                     and bool(self.buttons_start_clicked):
                                 self.selected_screen = self.all_screens[2]
+
                 if event.type == pygame.MOUSEMOTION:
                     mouse_coords = event.pos
 
@@ -142,6 +143,12 @@ class SellAndGive:
                             else:
                                 button.selected = False
                                 button.tracing = False
+                    if self.selected_screen == self.all_screens[2]:
+                        for icon in self.desktop_icons_group.sprites():
+                            if icon.clicked(event.pos):
+                                icon.tracing = True
+                            else:
+                                icon.tracing = False
 
             if not running:
                 continue
@@ -297,6 +304,12 @@ class SellAndGive:
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
         desktop_background = pygame_image.Image('data/desktop.png', resize=True)
         self.screen.blit(desktop_background.image, desktop_background.rect)
+        for icon in self.desktop_icons_group:
+            if icon.tracing:
+                pygame.draw.rect(self.screen, pygame.Color(200, 200, 200), (
+                    icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]))
+                pygame.draw.rect(self.screen, pygame.Color(0, 0, 0), (
+                    icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]), 3)
         self.desktop_icons_group.draw(self.screen)
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)

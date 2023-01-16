@@ -15,15 +15,31 @@ class Image(pygame.sprite.Sprite):  # преобразует файл изобр
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = location
 
+    def clicked(self, mouse_pos):
+        x, y = mouse_pos
+        if self.coords[0] <= x <= self.coords[0] + self.image.get_rect()[2] and \
+                self.coords[1] <= y <= self.coords[1] + self.image.get_rect()[3]:
+            return True
+        return False
+
 
 class Icon(pygame.sprite.Sprite):
-    def __init__(self, image_file, location=(0, 0), *group):
+    def __init__(self, image_file, coords=(0, 0), *group):
         super().__init__(*group)
+        self.coords = coords
         self.image = load_image(image_file, -1)
+        self.tracing = False
         self.image = pygame.transform.scale(self.image, (220, 200))
+        self.size = self.image.get_width(), self.image.get_height()
         self.rect = self.image.get_rect()
-        self.rect.left, self.rect.top = location
+        self.rect.left, self.rect.top = self.coords
 
+    def clicked(self, mouse_pos):
+        x, y = mouse_pos
+        if self.coords[0] <= x <= self.coords[0] + self.image.get_rect()[2] and \
+                self.coords[1] <= y <= self.coords[1] + self.image.get_rect()[3]:
+            return True
+        return False
 
 
 def load_image(name, colorkey=None):
