@@ -11,6 +11,16 @@ class Image(pygame.sprite.Sprite):  # преобразует файл изобр
         self.rect.left, self.rect.top = location
 
 
+class Icon(pygame.sprite.Sprite):
+    def __init__(self, image_file, location=(0, 0), *group):
+        super().__init__(*group)
+
+        self.rect = self.image.get_rect()
+        self.rect.left, self.rect.top = location
+        self.image = load_image(image_file, -1)
+        self.image = pygame.transform.scale(self.image, (220, 200))
+
+
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     # если файл не существует, то выходим
