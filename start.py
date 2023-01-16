@@ -14,7 +14,7 @@ class SellAndGive:
         self.width = GetSystemMetrics(0)
         self.height = GetSystemMetrics(1)
         self.screen = pygame.display.set_mode((self.width, self.height))
-        self.all_screens = ['MainMenu', 'NewGameScreen', 'Continue', 'Authors', 'Desktop', 'Site']
+        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Continue', 'Authors']
 
         self.menu_buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0],
                              ['Выйти', 0]]  # названия и состояния кнопок
@@ -46,6 +46,11 @@ class SellAndGive:
                                                          'Наличие на вашем складе - 7 штук'}
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
+
+        icons_list = ['browser.png']
+        self.desktop_icons_group = pygame.sprite.Group()
+        for ind, item in enumerate(icons_list):
+            pygame_image.Icon(item, (5, 5 + 100 * ind), self.desktop_icons_group)
 
         self.app_running()
 
@@ -114,8 +119,7 @@ class SellAndGive:
                             elif button.clicked(event.pos) \
                                     and button.name == 'Начать' \
                                     and bool(self.buttons_start_clicked):
-                                print('СТАРТУЕМ с начальным выбором ' + self.buttons_start_clicked[0], 'И названием ' + self.start_text_input.text)
-
+                                self.selected_screen = self.all_screens[2]
                 if event.type == pygame.MOUSEMOTION:
                     mouse_coords = event.pos
 
@@ -152,7 +156,7 @@ class SellAndGive:
                 self.starting_screen()
 
             elif self.selected_screen == 'Desktop':
-                pass
+                self.desktop_screen()
 
             elif self.selected_screen == 'Site':
                 pass
@@ -291,7 +295,9 @@ class SellAndGive:
         self.buttons_start_group.draw(self.screen)
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
-        pass
+        desktop_background = pygame_image.Image('data/desktop.png', resize=True)
+        self.screen.blit(desktop_background.image, desktop_background.rect)
+        self.desktop_icons_group.draw(self.screen)
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
         self.screen.fill((100, 100, 100))

@@ -4,9 +4,14 @@ import sys
 
 
 class Image(pygame.sprite.Sprite):  # преобразует файл изображения в формат, распознаваемый pygame
-    def __init__(self, image_file, location=(0, 0)):
+    def __init__(self, image_file, location=(0, 0), resize=False, resize_size=(0, 0)):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load(image_file)
+        if resize:
+            if all(resize_size):
+                self.image = pygame.transform.scale(self.image, resize_size)
+            else:
+                self.image = pygame.transform.scale(self.image, (1920, 1080))
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = location
 
@@ -14,11 +19,11 @@ class Image(pygame.sprite.Sprite):  # преобразует файл изобр
 class Icon(pygame.sprite.Sprite):
     def __init__(self, image_file, location=(0, 0), *group):
         super().__init__(*group)
-
-        self.rect = self.image.get_rect()
-        self.rect.left, self.rect.top = location
         self.image = load_image(image_file, -1)
         self.image = pygame.transform.scale(self.image, (220, 200))
+        self.rect = self.image.get_rect()
+        self.rect.left, self.rect.top = location
+
 
 
 def load_image(name, colorkey=None):
