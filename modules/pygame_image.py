@@ -4,9 +4,11 @@ import sys
 
 
 class Image(pygame.sprite.Sprite):  # преобразует файл изображения в формат, распознаваемый pygame
-    def __init__(self, image_file, location=(0, 0)):
+    def __init__(self, image_file, location=(0, 0), resize=False):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load(image_file)
+        if resize:
+            self.image = pygame.transform.scale(self.image, (1920, 1080))
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = location
 

@@ -14,7 +14,7 @@ class SellAndGive:
         self.width = GetSystemMetrics(0)
         self.height = GetSystemMetrics(1)
         self.screen = pygame.display.set_mode((self.width, self.height))
-        self.all_screens = ['MainMenu', 'NewGameScreen', 'Continue', 'Authors', 'Desktop', 'Site']
+        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Continue', 'Authors']
 
         self.menu_buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0],
                              ['Выйти', 0]]  # названия и состояния кнопок
@@ -114,7 +114,8 @@ class SellAndGive:
                             elif button.clicked(event.pos) \
                                     and button.name == 'Начать' \
                                     and bool(self.buttons_start_clicked):
-                                print('СТАРТУЕМ с начальным выбором ' + self.buttons_start_clicked[0], 'И названием ' + self.start_text_input.text)
+                                self.variant, self.shop_name = self.buttons_start_clicked[0], self.start_text_input.text
+                                self.selected_screen = self.all_screens[2]
 
                 if event.type == pygame.MOUSEMOTION:
                     mouse_coords = event.pos
@@ -152,7 +153,7 @@ class SellAndGive:
                 self.starting_screen()
 
             elif self.selected_screen == 'Desktop':
-                pass
+                self.desktop_screen()
 
             elif self.selected_screen == 'Site':
                 pass
@@ -265,11 +266,11 @@ class SellAndGive:
 
     def starting_screen(self):  # здесь будет рисоваться стартовый экран
         screen_background = pygame_image.Image('data/computer_prototype.png')
+        self.screen.blit(screen_background.image, screen_background.rect)
         name_label = pygame_text.label('Введите название магазина:', (self.width - 1250, 50))
         tip = '\nПОДСКАЗКА: Помните, что завершая день\n'\
               'На счету должно оставаться как минимум 10 рублей!\n'\
               'Иначе вы умрете от голода.'
-        self.screen.blit(screen_background.image, screen_background.rect)
         for button in self.buttons_start_group.sprites():
             if button.tracing:
                 pygame.draw.rect(self.screen, pygame.Color(150, 150, 150), (
@@ -291,7 +292,8 @@ class SellAndGive:
         self.buttons_start_group.draw(self.screen)
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
-        pass
+        screen_background = pygame_image.Image('data/desktop.png', resize=True)
+        self.screen.blit(screen_background.image, screen_background.rect)
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
         self.screen.fill((100, 100, 100))
