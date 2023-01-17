@@ -6,6 +6,7 @@ import pygame
 from modules import pygame_button, pygame_image, pygame_text
 from win32api import GetSystemMetrics
 import sqlite3
+import shutil
 import os
 import sys
 
@@ -15,7 +16,8 @@ class SellAndGive:
         self.width = GetSystemMetrics(0)
         self.height = GetSystemMetrics(1)
         self.screen = pygame.display.set_mode((self.width, self.height))
-        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Warehouse', 'Logistics', 'Purchase', 'Continue', 'Authors']
+        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Warehouse',
+                            'Logistics', 'Purchase', 'Continue', 'Authors']
 
         self.menu_buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0],
                              ['Выйти', 0]]  # названия и состояния кнопок
@@ -100,7 +102,7 @@ class SellAndGive:
                                 self.menu_button_location[1][0] + self.menu_button_location[1][2] and \
                                 self.menu_button_location[1][1] <= event.pos[1] <= \
                                 self.menu_button_location[1][1] + self.menu_button_location[1][3]:
-                            self.selected_screen = self.all_screens[2]
+                            self.selected_screen = self.all_screens[self.all_screens.index('Continue')]
 
                         # нажатие по кнопке Авторы
                         elif self.menu_button_location[2][0] <= event.pos[0] <= \
@@ -120,22 +122,29 @@ class SellAndGive:
                             elif button.clicked(event.pos) \
                                     and button.name == 'Начать' \
                                     and bool(self.buttons_start_clicked):
-                                con = sqlite3.connect("data/saved_data.db")
-                                cur = con.cursor()
-                                cur.execute("""INSERT INTO shop_data(name, money, transport, 
+                                if os.path.exists('data/saved_data.db'):
+                                    os.remove('data/saved_data.db')
+                                    shutil.copy('data/data_sample.db', 'data/saved_data.db')
+                                else:
+                                    shutil.copy('data/data_sample.db', 'data/saved_data.db')
+
+                                self.con = sqlite3.connect("data/saved_data.db")
+                                self.cur = self.con.cursor()
+
+                                self.cur.execute("""INSERT INTO shop_data(name, money, transport, 
                                 customers_multiplier, failure_multiplier, price_multiplier, capacity) 
                                 VALUES(?, ?, ?, ?, ?, ?, ?)""",
                                             (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 20)).fetchall()
-                                con.commit()
+                                self.con.commit()
                                 if self.buttons_start_clicked[0] == 'Попиты':
                                     count = 10
                                 elif self.buttons_start_clicked[0] == 'Скрепки':
                                     count = 20
                                 elif self.buttons_start_clicked[0] == 'Строительный мусор':
                                     count = 7
-                                cur.execute("""INSERT INTO warehouse(name, count) VALUES(?, ?)""",
+                                self.cur.execute("""INSERT INTO warehouse(name, count) VALUES(?, ?)""",
                                             (self.buttons_start_clicked[0], count))
-                                con.commit()
+                                self.con.commit()
                                 self.selected_screen = self.all_screens[2]
 
                     elif self.selected_screen == self.all_screens[2]:
@@ -184,6 +193,13 @@ class SellAndGive:
                     self.start_plot()
                     self.start_plot_played = True
                 self.starting_screen()
+
+            elif self.selected_screen == 'Continue':
+                self.add_cur_and_con()
+                if os.path.exists('data/saved_data.db'):
+                    self.selected_screen = self.all_screens[self.all_screens.index('Desktop')]
+                else:
+                    self.selected_screen = self.all_screens[1]
 
             elif self.selected_screen == 'Desktop':
                 self.desktop_screen()
@@ -348,6 +364,13 @@ class SellAndGive:
         site_background = pygame_image.Image('data/background_site.png', [0, 0])
         self.screen.blit(site_background.image, site_background.rect)
 
+        shop_name, money = self.cur.execute('''SELECT name, money FROM shop_data''').fetchone()
+        shop_name = pygame_text.label('Интернет-магазин ' + shop_name, (self.width, 150))
+        money_count = pygame_text.label(f'Кошелек: {money} рублей', (self.width, self.height))
+
+        self.screen.blit(shop_name[0], ((shop_name[1][0] - shop_name[2]) // 2, shop_name[1][1]))
+        self.screen.blit(money_count[0], (money_count[1][0] - money_count[2], money_count[1][1] - money_count[3]))
+
     def warehouse_screen(self):
         warehouse_background = pygame_image.Image('data/background_storage.png', [0, 0], resize=True)
         self.screen.blit(warehouse_background.image, warehouse_background.rect)
@@ -368,6 +391,10 @@ class SellAndGive:
 
     def vacation_screen(self):
         pass
+
+    def add_cur_and_con(self):
+        self.con = sqlite3.connect("data/saved_data.db")
+        self.cur = self.con.cursor()
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
         self.screen.fill((100, 100, 100))
