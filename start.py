@@ -5,6 +5,7 @@
 import pygame
 from modules import pygame_button, pygame_image, pygame_text
 from win32api import GetSystemMetrics
+import sqlite3
 import os
 import sys
 
@@ -119,6 +120,22 @@ class SellAndGive:
                             elif button.clicked(event.pos) \
                                     and button.name == 'Начать' \
                                     and bool(self.buttons_start_clicked):
+                                con = sqlite3.connect("data/saved_data.db")
+                                cur = con.cursor()
+                                cur.execute("""INSERT INTO shop_data(name, money, transport, 
+                                customers_multiplier, failure_multiplier, price_multiplier, capacity) 
+                                VALUES(?, ?, ?, ?, ?, ?, ?)""",
+                                            (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 20)).fetchall()
+                                con.commit()
+                                if self.buttons_start_clicked[0] == 'Попиты':
+                                    count = 10
+                                elif self.buttons_start_clicked[0] == 'Скрепки':
+                                    count = 20
+                                elif self.buttons_start_clicked[0] == 'Строительный мусор':
+                                    count = 7
+                                cur.execute("""INSERT INTO warehouse(name, count) VALUES(?, ?)""",
+                                            (self.buttons_start_clicked[0], count))
+                                con.commit()
                                 self.selected_screen = self.all_screens[2]
 
                     elif self.selected_screen == self.all_screens[2]:
