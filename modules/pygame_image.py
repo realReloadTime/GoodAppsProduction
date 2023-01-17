@@ -26,6 +26,7 @@ class Image(pygame.sprite.Sprite):  # преобразует файл изобр
 class Icon(pygame.sprite.Sprite):
     def __init__(self, image_file, coords=(0, 0), *group):
         super().__init__(*group)
+        self.name = image_file
         self.coords = coords
         self.image = load_image(image_file, -1)
         self.tracing = False

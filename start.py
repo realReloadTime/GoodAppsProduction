@@ -14,7 +14,7 @@ class SellAndGive:
         self.width = GetSystemMetrics(0)
         self.height = GetSystemMetrics(1)
         self.screen = pygame.display.set_mode((self.width, self.height))
-        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Continue', 'Authors']
+        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Warehouse', 'Logistics', 'Purchase', 'Continue', 'Authors']
 
         self.menu_buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0],
                              ['Выйти', 0]]  # названия и состояния кнопок
@@ -109,7 +109,7 @@ class SellAndGive:
                             self.selected_screen = self.all_screens[3]
 
                     # кнопки на стартовом экране
-                    if self.selected_screen == self.all_screens[1]:
+                    elif self.selected_screen == self.all_screens[1]:
                         for button in self.buttons_start_group.sprites():
                             if button.clicked(event.pos) and button.name != 'Начать':
                                 button.tracing = False
@@ -120,6 +120,12 @@ class SellAndGive:
                                     and button.name == 'Начать' \
                                     and bool(self.buttons_start_clicked):
                                 self.selected_screen = self.all_screens[2]
+
+                    elif self.selected_screen == self.all_screens[2]:
+                        for icon in self.desktop_icons_group.sprites():
+                            if icon.clicked(event.pos):
+                                if icon.name == 'browser.png':
+                                    self.selected_screen = self.all_screens[3]
 
                 if event.type == pygame.MOUSEMOTION:
                     mouse_coords = event.pos
@@ -132,7 +138,7 @@ class SellAndGive:
                             else:
                                 self.menu_buttons[self.menu_button_location.index([x, y, w, h])][1] = 0
 
-                    if self.selected_screen == self.all_screens[1]:
+                    elif self.selected_screen == self.all_screens[1]:
                         for button in self.buttons_start_group.sprites():
                             if button.clicked(event.pos) \
                                     and button.name not in self.buttons_start_clicked \
@@ -143,7 +149,7 @@ class SellAndGive:
                             else:
                                 button.selected = False
                                 button.tracing = False
-                    if self.selected_screen == self.all_screens[2]:
+                    elif self.selected_screen == self.all_screens[2]:
                         for icon in self.desktop_icons_group.sprites():
                             if icon.clicked(event.pos):
                                 icon.tracing = True
@@ -166,7 +172,16 @@ class SellAndGive:
                 self.desktop_screen()
 
             elif self.selected_screen == 'Site':
-                pass
+                self.site_screen()
+
+            elif self.selected_screen == 'Warehouse':
+                self.warehouse_screen()
+
+            elif self.selected_screen == 'Logistics':
+                self.logistics_screen()
+
+            elif self.selected_screen == 'Purchase':
+                self.purchase_screen()
 
             self.screen.blit(cursor, mouse_coords)
             pygame.display.flip()
@@ -311,6 +326,31 @@ class SellAndGive:
                 pygame.draw.rect(self.screen, pygame.Color(0, 0, 0), (
                     icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]), 3)
         self.desktop_icons_group.draw(self.screen)
+
+    def site_screen(self):
+        site_background = pygame_image.Image('data/background_site.png', [0, 0])
+        self.screen.blit(site_background.image, site_background.rect)
+
+    def warehouse_screen(self):
+        warehouse_background = pygame_image.Image('data/background_storage.png', [0, 0], resize=True)
+        self.screen.blit(warehouse_background.image, warehouse_background.rect)
+
+    def logistics_screen(self):
+        logistics_background = pygame_image.Image('data/background_logistics.png', [0, 0], resize=True)
+        self.screen.blit(logistics_background.image, logistics_background.rect)
+
+    def purchase_screen(self):
+        purchase_background = pygame_image.Image('data/background_purchase.png', [0, 0], resize=True)
+        self.screen.blit(purchase_background.image, purchase_background.rect)
+
+    def promotion_screen(self):
+        pass
+
+    def growth_point(self):
+        pass
+
+    def vacation_screen(self):
+        pass
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
         self.screen.fill((100, 100, 100))
