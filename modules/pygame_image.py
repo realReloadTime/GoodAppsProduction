@@ -4,10 +4,13 @@ import sys
 
 
 class Image(pygame.sprite.Sprite):  # преобразует файл изображения в формат, распознаваемый pygame
-    def __init__(self, image_file, location=(0, 0), resize=False, resize_size=(0, 0)):
+    def __init__(self, image_file, location=(0, 0), resize=False, resize_size=(0, 0), clear_background = False):
         pygame.sprite.Sprite.__init__(self)
         self.coords = location
-        self.image = pygame.image.load(image_file)
+        if clear_background:
+            self.image = load_image(image_file, -1)
+        else:
+            self.image = pygame.image.load(image_file)
         if resize:
             if all(resize_size):
                 self.image = pygame.transform.scale(self.image, resize_size)

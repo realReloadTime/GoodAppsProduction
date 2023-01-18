@@ -389,7 +389,9 @@ class SellAndGive:
 
     def site_screen(self):
         site_background = pygame_image.Image('data/background_site.png', [0, 0])
+        addres_pic = pygame_image.Image('adress.png', [0, 5], clear_background=True)
         self.screen.blit(site_background.image, site_background.rect)
+        self.screen.blit(addres_pic.image, addres_pic.rect)
 
         shop_name, money = self.cur.execute('''SELECT name, money FROM shop_data''').fetchone()
         shop_name = pygame_text.label('Интернет-магазин ' + shop_name, (self.width, 150))
