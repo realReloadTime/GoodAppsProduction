@@ -45,7 +45,7 @@ class SellAndGive:
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
-        icons_list = ['browser.png', 'warehouse.png', 'logistic.png']
+        icons_list = ['browser.png', 'warehouse.png', 'logistic.png', 'purchase.png']
         self.desktop_icons_group = pygame.sprite.Group()
         for ind, item in enumerate(icons_list):
             pygame_image.Icon(item, (5, 5 + 210 * ind), self.desktop_icons_group)
@@ -156,6 +156,8 @@ class SellAndGive:
                                     self.selected_screen = self.all_screens[4]
                                 elif icon.name == 'logistic.png':
                                     self.selected_screen = self.all_screens[5]
+                                elif icon.name == 'purchase.png':
+                                    self.selected_screen = self.all_screens[6]
 
                     elif self.selected_screen == self.all_screens[3]:
                         pass
