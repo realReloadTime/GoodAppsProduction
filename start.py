@@ -195,8 +195,8 @@ class SellAndGive:
                 self.starting_screen()
 
             elif self.selected_screen == 'Continue':
-                self.add_cur_and_con()
                 if os.path.exists('data/saved_data.db'):
+                    self.add_cur_and_con()
                     self.selected_screen = self.all_screens[self.all_screens.index('Desktop')]
                 else:
                     self.selected_screen = self.all_screens[1]
