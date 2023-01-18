@@ -6,6 +6,7 @@ import sys
 class Image(pygame.sprite.Sprite):  # преобразует файл изображения в формат, распознаваемый pygame
     def __init__(self, image_file, location=(0, 0), resize=False, resize_size=(0, 0)):
         pygame.sprite.Sprite.__init__(self)
+        self.coords = location
         self.image = pygame.image.load(image_file)
         if resize:
             if all(resize_size):

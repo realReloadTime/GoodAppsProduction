@@ -1,14 +1,9 @@
-# ЗАДАЧИ  !!!
-
-# Начать разработку дата базы для сохранения данных
-
 import pygame
 from modules import pygame_button, pygame_image, pygame_text
 from win32api import GetSystemMetrics
 import sqlite3
 import shutil
 import os
-import sys
 
 
 class SellAndGive:
@@ -50,10 +45,15 @@ class SellAndGive:
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
-        icons_list = ['browser.png']
+        icons_list = ['browser.png', 'warehouse.png', 'logistic.png']
         self.desktop_icons_group = pygame.sprite.Group()
         for ind, item in enumerate(icons_list):
-            pygame_image.Icon(item, (5, 5 + 100 * ind), self.desktop_icons_group)
+            pygame_image.Icon(item, (5, 5 + 210 * ind), self.desktop_icons_group)
+
+        self.warehouse_icons_groups = pygame.sprite.Group()
+        icons = [('back_to_desktop.png', (self.width - 200, 5))]
+        for icon in icons:
+            pygame_image.Icon(icon[0], icon[1], self.warehouse_icons_groups)
 
         self.app_running()
 
@@ -132,9 +132,9 @@ class SellAndGive:
                                 self.cur = self.con.cursor()
 
                                 self.cur.execute("""INSERT INTO shop_data(name, money, transport, 
-                                customers_multiplier, failure_multiplier, price_multiplier, capacity) 
+                                customers_multiplier, failure_multiplier, price_multiplier, level) 
                                 VALUES(?, ?, ?, ?, ?, ?, ?)""",
-                                            (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 20)).fetchall()
+                                                 (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 1)).fetchall()
                                 self.con.commit()
                                 if self.buttons_start_clicked[0] == 'Попиты':
                                     count = 10
@@ -143,7 +143,7 @@ class SellAndGive:
                                 elif self.buttons_start_clicked[0] == 'Строительный мусор':
                                     count = 7
                                 self.cur.execute("""INSERT INTO warehouse(name, count) VALUES(?, ?)""",
-                                            (self.buttons_start_clicked[0], count))
+                                                 (self.buttons_start_clicked[0], count))
                                 self.con.commit()
                                 self.selected_screen = self.all_screens[2]
 
@@ -152,6 +152,19 @@ class SellAndGive:
                             if icon.clicked(event.pos):
                                 if icon.name == 'browser.png':
                                     self.selected_screen = self.all_screens[3]
+                                elif icon.name == 'warehouse.png':
+                                    self.selected_screen = self.all_screens[4]
+                                elif icon.name == 'logistic.png':
+                                    self.selected_screen = self.all_screens[5]
+
+                    elif self.selected_screen == self.all_screens[3]:
+                        pass
+
+                    elif self.selected_screen == self.all_screens[4]:
+                        for icon in self.warehouse_icons_groups.sprites():
+                            if icon.clicked(event.pos):
+                                if icon.name == 'back_to_desktop.png':
+                                    self.selected_screen = self.all_screens[2]
 
                 if event.type == pygame.MOUSEMOTION:
                     mouse_coords = event.pos
@@ -177,6 +190,15 @@ class SellAndGive:
                                 button.tracing = False
                     elif self.selected_screen == self.all_screens[2]:
                         for icon in self.desktop_icons_group.sprites():
+                            if icon.clicked(event.pos):
+                                icon.tracing = True
+                            else:
+                                icon.tracing = False
+                    elif self.selected_screen == self.all_screens[3]:
+                        pass
+
+                    elif self.selected_screen == self.all_screens[4]:
+                        for icon in self.warehouse_icons_groups.sprites():
                             if icon.clicked(event.pos):
                                 icon.tracing = True
                             else:
@@ -325,8 +347,8 @@ class SellAndGive:
     def starting_screen(self):  # здесь будет рисоваться стартовый экран
         screen_background = pygame_image.Image('data/computer_prototype.png')
         name_label = pygame_text.label('Введите название магазина:', (self.width - 1250, 50))
-        tip = '\nПОДСКАЗКА: Помните, что завершая день\n'\
-              'На счету должно оставаться как минимум 10 рублей!\n'\
+        tip = '\nПОДСКАЗКА: Помните, что завершая день\n' \
+              'На счету должно оставаться как минимум 10 рублей!\n' \
               'Иначе вы умрете от голода.'
         self.screen.blit(screen_background.image, screen_background.rect)
         for button in self.buttons_start_group.sprites():
@@ -351,7 +373,10 @@ class SellAndGive:
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
         desktop_background = pygame_image.Image('data/desktop.png', resize=True)
+        money = self.cur.execute('''SELECT money FROM shop_data''').fetchone()[0]
+        money_count = pygame_text.label(f'Кошелек: {money} рублей', (self.width, self.height))
         self.screen.blit(desktop_background.image, desktop_background.rect)
+        self.screen.blit(money_count[0], (money_count[1][0] - money_count[2], money_count[1][1] - money_count[3]))
         for icon in self.desktop_icons_group:
             if icon.tracing:
                 pygame.draw.rect(self.screen, pygame.Color(200, 200, 200), (
@@ -374,6 +399,19 @@ class SellAndGive:
     def warehouse_screen(self):
         warehouse_background = pygame_image.Image('data/background_storage.png', [0, 0], resize=True)
         self.screen.blit(warehouse_background.image, warehouse_background.rect)
+        for button in self.warehouse_icons_groups.sprites():
+            if button.tracing:
+                pygame.draw.rect(self.screen, pygame.Color(0, 100, 50), (
+                    button.coords[0] + 20, button.rect[1], 170, button.size[1] - 30), 3)  # координаты верхнего левого
+                # угла, ширина, высота
+        items = self.cur.execute('''SELECT * FROM warehouse''').fetchall()
+        label_total = pygame_text.label('В НАЛИЧИИ', (90, 120), size=70)
+        self.screen.blit(label_total[0], label_total[1])
+        for ind, item in enumerate(items):
+            item = map(str, item)
+            label = pygame_text.label(': '.join(item), (25, 240 + ind * 75))
+            self.screen.blit(label[0], label[1])
+        self.warehouse_icons_groups.draw(self.screen)
 
     def logistics_screen(self):
         logistics_background = pygame_image.Image('data/background_logistics.png', [0, 0], resize=True)
