@@ -45,8 +45,12 @@ class SellAndGive:
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
-        icons_list = ['browser.png', 'warehouse.png', 'logistic.png', 'purchase.png']
+        icons_list = ['browser.png', 'warehouse.png', 'logistic.png', 'purchase.png', 'growth_point.png']
         self.desktop_icons_group = pygame.sprite.Group()
+        pygame_image.Icon('clear_image.png', (self.width - 300, 5), self.desktop_icons_group)
+        for sprite in self.desktop_icons_group.sprites():
+            if sprite.name == 'clear_image.png':
+                sprite.add_text('Следущий день', size=50, color='red')
         for ind, item in enumerate(icons_list):
             pygame_image.Icon(item, (5, 5 + 210 * ind), self.desktop_icons_group)
 
@@ -54,6 +58,11 @@ class SellAndGive:
         icons = [('back_to_desktop.png', (self.width - 200, 5))]
         for icon in icons:
             pygame_image.Icon(icon[0], icon[1], self.warehouse_icons_groups)
+
+        self.site_buttons_group = pygame.sprite.Group()
+        site_buttons = [('back_to_desktop(site).png', (self.width - 175, 5))]
+        for button in site_buttons:
+            pygame_button.Button(button[0], button[1], 'black', self.site_buttons_group)
 
         self.app_running()
 
@@ -109,7 +118,7 @@ class SellAndGive:
                                 self.menu_button_location[2][0] + self.menu_button_location[2][2] and \
                                 self.menu_button_location[2][1] <= event.pos[1] <= \
                                 self.menu_button_location[2][1] + self.menu_button_location[2][3]:
-                            self.selected_screen = self.all_screens[3]
+                            self.selected_screen = self.all_screens[-1]
 
                     # кнопки на стартовом экране
                     elif self.selected_screen == self.all_screens[1]:
@@ -132,9 +141,9 @@ class SellAndGive:
                                 self.cur = self.con.cursor()
 
                                 self.cur.execute("""INSERT INTO shop_data(name, money, transport, 
-                                customers_multiplier, failure_multiplier, price_multiplier, level) 
-                                VALUES(?, ?, ?, ?, ?, ?, ?)""",
-                                                 (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 1)).fetchall()
+                                customers_multiplier, failure_multiplier, price_multiplier, level, day) 
+                                VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
+                                                 (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 1, 0)).fetchall()
                                 self.con.commit()
                                 if self.buttons_start_clicked[0] == 'Попиты':
                                     count = 10
@@ -160,7 +169,9 @@ class SellAndGive:
                                     self.selected_screen = self.all_screens[6]
 
                     elif self.selected_screen == self.all_screens[3]:
-                        pass
+                        for button in self.site_buttons_group.sprites():
+                            if 'back_to' in button.name:
+                                self.selected_screen = self.all_screens[2]
 
                     elif self.selected_screen == self.all_screens[4]:
                         for icon in self.warehouse_icons_groups.sprites():
@@ -197,7 +208,11 @@ class SellAndGive:
                             else:
                                 icon.tracing = False
                     elif self.selected_screen == self.all_screens[3]:
-                        pass
+                        for button in self.site_buttons_group.sprites():
+                            if button.clicked(event.pos):
+                                button.tracing = True
+                            else:
+                                button.tracing = False
 
                     elif self.selected_screen == self.all_screens[4]:
                         for icon in self.warehouse_icons_groups.sprites():
@@ -380,11 +395,16 @@ class SellAndGive:
         self.screen.blit(desktop_background.image, desktop_background.rect)
         self.screen.blit(money_count[0], (money_count[1][0] - money_count[2], money_count[1][1] - money_count[3]))
         for icon in self.desktop_icons_group:
-            if icon.tracing:
+            if icon.tracing and icon.name != 'clear_image.png':
                 pygame.draw.rect(self.screen, pygame.Color(200, 200, 200), (
                     icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]))
                 pygame.draw.rect(self.screen, pygame.Color(0, 0, 0), (
                     icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]), 3)
+            elif icon.tracing and icon.name == 'clear_image.png':
+                icon.add_text('Следущий день', size=50, color='green')
+            elif not icon.tracing and icon.name == 'clear_image.png':
+                icon.add_text('Следущий день', size=50, color='red')
+
         self.desktop_icons_group.draw(self.screen)
 
     def site_screen(self):
@@ -393,10 +413,16 @@ class SellAndGive:
         self.screen.blit(site_background.image, site_background.rect)
         self.screen.blit(addres_pic.image, addres_pic.rect)
 
+        for button in self.site_buttons_group.sprites():
+            if button.tracing:
+                pygame.draw.rect(self.screen, pygame.Color(150, 150, 20), (
+                    button.coords[0], button.coords[1], button.size[0], button.size[1]), 3)
+
         shop_name, money = self.cur.execute('''SELECT name, money FROM shop_data''').fetchone()
         shop_name = pygame_text.label('Интернет-магазин ' + shop_name, (self.width, 150))
         money_count = pygame_text.label(f'Кошелек: {money} рублей', (self.width, self.height))
 
+        self.site_buttons_group.draw(self.screen)
         self.screen.blit(shop_name[0], ((shop_name[1][0] - shop_name[2]) // 2, shop_name[1][1]))
         self.screen.blit(money_count[0], (money_count[1][0] - money_count[2], money_count[1][1] - money_count[3]))
 

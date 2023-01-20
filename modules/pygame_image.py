@@ -4,7 +4,7 @@ import sys
 
 
 class Image(pygame.sprite.Sprite):  # преобразует файл изображения в формат, распознаваемый pygame
-    def __init__(self, image_file, location=(0, 0), resize=False, resize_size=(0, 0), clear_background = False):
+    def __init__(self, image_file, location=(0, 0), resize=False, resize_size=(0, 0), clear_background=False):
         pygame.sprite.Sprite.__init__(self)
         self.coords = location
         if clear_background:
@@ -46,9 +46,23 @@ class Icon(pygame.sprite.Sprite):
             return True
         return False
 
+    def add_text(self, text, size, color='black'):
+        from modules.pygame_text import label
+        text_pov = label(text, (0, 0), size=size, color=color)
+        self.image = pygame.transform.scale(self.image, (text_pov[2], text_pov[3]))
+        self.image.blit(text_pov[0], (0, 0))
+        self.size = self.image.get_width(), self.image.get_height()
+
+    def return_size(self, image_file):
+        self.image = load_image(image_file, -1)
+        self.size = self.image.get_width(), self.image.get_height()
+
 
 def load_image(name, colorkey=None):
-    fullname = os.path.join('data', name)
+    if 'data' not in name:
+        fullname = os.path.join('data', name)
+    else:
+        fullname = name
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
