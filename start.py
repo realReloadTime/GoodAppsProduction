@@ -5,7 +5,6 @@
 import pygame
 from modules import pygame_button, pygame_image, pygame_text
 from win32api import GetSystemMetrics
-import sqlite3
 import os
 import sys
 
@@ -30,9 +29,9 @@ class SellAndGive:
         self.buttons_start_clicked = []  # здесь будет последняя нажатая кнопка при начальном выборе товара
         self.start_text_input = pygame_text.InputBox(self.width - 700, 60, 600, 40, 'ООО"ПродАкшен"')
         start_buttons = [('Начать', (self.width - 300, self.height - 200), '#008000'),
-                         ('Попиты', (200, 200), '#e55c5c'),
-                         ('Скрепки', (200, 400), '#e55c5c'),
-                         ('Строительный мусор', (200, 600), '#e55c5c')]
+                         ('Попиты', (200, 200), None),
+                         ('Скрепки', (200, 400), None),
+                         ('Строительный мусор', (200, 600), None)]
         self.start_buttons_info = {'Попиты': 'Самый ходовой товар в вашем городе, \nможно продавать за соответствующую '
                                              'цену\n'
                                              'Делаются в Китае, поэтому \nцена за оптовые закупки высокая,\n'
@@ -45,13 +44,14 @@ class SellAndGive:
                                                          'Можно найти в окрестностях, \nцена за оптовые закупки '
                                                          'средняя\n'
                                                          'Наличие на вашем складе - 7 штук'}
+        self.icons_desktop_group = pygame.sprite.Group()
+        items =
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
-        icons_list = ['browser.png']
-        self.desktop_icons_group = pygame.sprite.Group()
-        for ind, item in enumerate(icons_list):
-            pygame_image.Icon(item, (5, 5 + 100 * ind), self.desktop_icons_group)
+        desktop_items = ['data/browser.png']
+        for item in desktop_items:
+            pygame_image.Image(item, resize=True, resize_size=(220, 200), background=False)
 
         self.app_running()
 
@@ -120,22 +120,7 @@ class SellAndGive:
                             elif button.clicked(event.pos) \
                                     and button.name == 'Начать' \
                                     and bool(self.buttons_start_clicked):
-                                con = sqlite3.connect("data/saved_data.db")
-                                cur = con.cursor()
-                                cur.execute("""INSERT INTO shop_data(name, money, transport, 
-                                customers_multiplier, failure_multiplier, price_multiplier, capacity) 
-                                VALUES(?, ?, ?, ?, ?, ?, ?)""",
-                                            (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 20)).fetchall()
-                                con.commit()
-                                if self.buttons_start_clicked[0] == 'Попиты':
-                                    count = 10
-                                elif self.buttons_start_clicked[0] == 'Скрепки':
-                                    count = 20
-                                elif self.buttons_start_clicked[0] == 'Строительный мусор':
-                                    count = 7
-                                cur.execute("""INSERT INTO warehouse(name, count) VALUES(?, ?)""",
-                                            (self.buttons_start_clicked[0], count))
-                                con.commit()
+                                self.variant, self.shop_name = self.buttons_start_clicked[0], self.start_text_input.text
                                 self.selected_screen = self.all_screens[2]
 
                 if event.type == pygame.MOUSEMOTION:
@@ -161,11 +146,7 @@ class SellAndGive:
                                 button.selected = False
                                 button.tracing = False
                     if self.selected_screen == self.all_screens[2]:
-                        for icon in self.desktop_icons_group.sprites():
-                            if icon.clicked(event.pos):
-                                icon.tracing = True
-                            else:
-                                icon.tracing = False
+                        pass
 
             if not running:
                 continue
@@ -293,11 +274,11 @@ class SellAndGive:
 
     def starting_screen(self):  # здесь будет рисоваться стартовый экран
         screen_background = pygame_image.Image('data/computer_prototype.png')
+        self.screen.blit(screen_background.image, screen_background.rect)
         name_label = pygame_text.label('Введите название магазина:', (self.width - 1250, 50))
         tip = '\nПОДСКАЗКА: Помните, что завершая день\n'\
               'На счету должно оставаться как минимум 10 рублей!\n'\
               'Иначе вы умрете от голода.'
-        self.screen.blit(screen_background.image, screen_background.rect)
         for button in self.buttons_start_group.sprites():
             if button.tracing:
                 pygame.draw.rect(self.screen, pygame.Color(150, 150, 150), (
@@ -319,15 +300,8 @@ class SellAndGive:
         self.buttons_start_group.draw(self.screen)
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
-        desktop_background = pygame_image.Image('data/desktop.png', resize=True)
-        self.screen.blit(desktop_background.image, desktop_background.rect)
-        for icon in self.desktop_icons_group:
-            if icon.tracing:
-                pygame.draw.rect(self.screen, pygame.Color(200, 200, 200), (
-                    icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]))
-                pygame.draw.rect(self.screen, pygame.Color(0, 0, 0), (
-                    icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]), 3)
-        self.desktop_icons_group.draw(self.screen)
+        screen_background = pygame_image.Image('data/desktop.png', resize=False)
+        self.screen.blit(screen_background.image, screen_background.rect)
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
         self.screen.fill((100, 100, 100))
