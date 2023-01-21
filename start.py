@@ -4,6 +4,7 @@ from win32api import GetSystemMetrics
 import sqlite3
 import shutil
 import os
+from random import randint, choice
 
 
 class SellAndGive:
@@ -42,15 +43,24 @@ class SellAndGive:
                                                          'Можно найти в окрестностях, \nцена за оптовые закупки '
                                                          'средняя\n'
                                                          'Наличие на вашем складе - 7 штук'}
+        self.task_list = [[], [], [], [], [], []]
+        self.task_names = ['Дядя Вася', 'Отец Евгений', 'Зиновор', 'Брат Зохраб', 'Золибек', 'Вордазар', 'Востинак',
+                           'Папин', 'Казимир', 'Тётя Забэл', 'Зинаида', 'Брат Радован', 'Ратибор', 'Роман', 'Сестра Ия',
+                           'Двоюродный дядя Иты', 'Прабабушка Инга', 'Троюродная сестра Генриетта', 'Градислава',
+                           'Груня', 'Четвероюродный брат Чеслав', 'Папа дяди Эраста', 'Даниил', 'Дмитрий', 'Доброслав',
+                           'Добросмысл', 'Дед Дорофей', 'Бабушка Оксана', 'Анастасия', 'Алиса', 'Тётя Жанна', 'Тамара',
+                           'Дед Агафон', 'Юрий', 'Незнакомец', 'Незнакомка', 'ТоТ_СаМыЙ', 'Снегр', 'Мечта',
+                           'Оксана 100 метров', 'Аверкий', 'Тётя Ева', 'Диана', 'Вивея', 'Артём', 'Тихон', 'Самсон',
+                           'Полерия', 'Ангелина', 'Регина', 'Ульяна', 'Олег']
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
         icons_list = ['browser.png', 'warehouse.png', 'logistic.png', 'purchase.png', 'growth_point.png']
         self.desktop_icons_group = pygame.sprite.Group()
-        pygame_image.Icon('clear_image.png', (self.width - 300, 5), self.desktop_icons_group)
+        pygame_image.Icon('clear_image.png', (self.width - 350, 5), self.desktop_icons_group)
         for sprite in self.desktop_icons_group.sprites():
             if sprite.name == 'clear_image.png':
-                sprite.add_text('Следущий день', size=50, color='red')
+                sprite.add_text('Следующий день', size=50, color='red')
         for ind, item in enumerate(icons_list):
             pygame_image.Icon(item, (5, 5 + 210 * ind), self.desktop_icons_group)
 
@@ -60,9 +70,6 @@ class SellAndGive:
             pygame_image.Icon(icon[0], icon[1], self.warehouse_icons_groups)
 
         self.site_buttons_group = pygame.sprite.Group()
-        site_buttons = [('back_to_desktop(site).png', (self.width - 175, 5))]
-        for button in site_buttons:
-            pygame_button.Button(button[0], button[1], 'black', self.site_buttons_group)
 
         self.app_running()
 
@@ -143,7 +150,7 @@ class SellAndGive:
                                 self.cur.execute("""INSERT INTO shop_data(name, money, transport, 
                                 customers_multiplier, failure_multiplier, price_multiplier, level, day) 
                                 VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
-                                                 (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 1, 0)).fetchall()
+                                                 (self.start_text_input.text, 1030, 1, 0.5, 0.5, 0.5, 1, 0)).fetchall()
                                 self.con.commit()
                                 if self.buttons_start_clicked[0] == 'Попиты':
                                     count = 10
@@ -154,6 +161,7 @@ class SellAndGive:
                                 self.cur.execute("""INSERT INTO warehouse(name, count) VALUES(?, ?)""",
                                                  (self.buttons_start_clicked[0], count))
                                 self.con.commit()
+                                self.next_day()
                                 self.selected_screen = self.all_screens[2]
 
                     elif self.selected_screen == self.all_screens[2]:
@@ -167,6 +175,8 @@ class SellAndGive:
                                     self.selected_screen = self.all_screens[5]
                                 elif icon.name == 'purchase.png':
                                     self.selected_screen = self.all_screens[6]
+                                elif icon.name == 'clear_image.png':
+                                    self.next_day()
 
                     elif self.selected_screen == self.all_screens[3]:
                         for button in self.site_buttons_group.sprites():
@@ -401,9 +411,9 @@ class SellAndGive:
                 pygame.draw.rect(self.screen, pygame.Color(0, 0, 0), (
                     icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]), 3)
             elif icon.tracing and icon.name == 'clear_image.png':
-                icon.add_text('Следущий день', size=50, color='green')
+                icon.add_text('Следующий день', size=50, color='green')
             elif not icon.tracing and icon.name == 'clear_image.png':
-                icon.add_text('Следущий день', size=50, color='red')
+                icon.add_text('Следующий день', size=50, color='red')
 
         self.desktop_icons_group.draw(self.screen)
 
@@ -421,6 +431,14 @@ class SellAndGive:
         shop_name, money = self.cur.execute('''SELECT name, money FROM shop_data''').fetchone()
         shop_name = pygame_text.label('Интернет-магазин ' + shop_name, (self.width, 150))
         money_count = pygame_text.label(f'Кошелек: {money} рублей', (self.width, self.height))
+        customers = self.cur.execute("""SELECT * FROM customers""").fetchall()
+        for index, customer in enumerate(customers):
+            cust_label = pygame_text.label(f'Заказ от {customer[1]}: {customer[2]}, {customer[3]} шт.', (50, 300 + 100 * index))
+            self.screen.blit(cust_label[0], cust_label[1])
+
+        site_buttons = [('back_to_desktop(site).png', (self.width - 175, 5))] + [(f'Принять заказ №{x + 1}', (self.width - 800, 260 + 100 * x)) for x in range(len(customers))]
+        for button in site_buttons:
+            pygame_button.Button(button[0], button[1], 'black', self.site_buttons_group)
 
         self.site_buttons_group.draw(self.screen)
         self.screen.blit(shop_name[0], ((shop_name[1][0] - shop_name[2]) // 2, shop_name[1][1]))
@@ -463,6 +481,89 @@ class SellAndGive:
     def add_cur_and_con(self):
         self.con = sqlite3.connect("data/saved_data.db")
         self.cur = self.con.cursor()
+
+    def next_day(self):
+        money, transport = self.cur.execute("""SELECT money, transport FROM shop_data""").fetchall()[0]
+        if money >= 0:
+            self.task_list = [[] for i in range(6)]
+            res = self.cur.execute("""SELECT * FROM goods_types 
+            WHERE opening_level=(SELECT level FROM shop_data)""").fetchall()
+            level = int(self.cur.execute("""SELECT level FROM shop_data""").fetchall()[0][0])
+
+            self.cur.execute("""UPDATE shop_data
+            SET money = money - ?""", (level * 30, ))
+            self.con.commit()
+            delivery_time = self.cur.execute("""SELECT delivery_time 
+            FROM transport_types WHERE id=?""", (transport, )).fetchone()[0]
+            delivery_cost = [x[0] for x in self.cur.execute("""SELECT delivery_cost FROM transport_types""").fetchall()]
+            warehouse_names = [''.join(x) for x in self.cur.execute("""SELECT name FROM warehouse""").fetchall()]
+            warehouse_count = [x[0] for x in self.cur.execute("""SELECT count FROM warehouse""").fetchall()]
+
+            for element in res:
+                if element in warehouse_names:
+                    count = randint(1, warehouse_count[warehouse_names.index(element)] + 3)
+                    while ((count - warehouse_count[warehouse_names.index(element)]) * int(element[2]) +
+                           delivery_cost[transport - 1] + level * 30 * delivery_time) >= money:
+                        count = randint(1, warehouse_count[warehouse_names.index(element)] + 3)
+                        if warehouse_count[warehouse_names.index(element)] * int(element[2]) + delivery_cost[transport - 1] >= money:
+                            count = randint(1, warehouse_count[warehouse_names.index(element)] + 3)
+                            break
+                else:
+                    count = randint(1, element[3] + 1)
+                    while (count * int(element[2]) + delivery_cost[transport - 1] + level * 30 * delivery_time) >= money:
+                        count = randint(1, element[3] + 1)
+                        if count * int(element[2]) + delivery_cost[transport - 1] >= money:
+                            count = randint(1, element[3] + 1)
+                            break
+                name = choice(self.task_names)
+                self.task_list[int(element[5])].append((name, element[1], count))
+
+            self.cur.execute("""DELETE from customers""")
+            self.con.commit()
+            for level in self.task_list:
+                for task in level:
+                    self.cur.execute("""INSERT INTO customers(name, good_name, count) VALUES(?, ?, ?)""",
+                                     (task[0], task[1], task[2]))
+                    self.con.commit()
+        else:
+            self.task_list = [[] for i in range(6)]
+            res = self.cur.execute("""SELECT * FROM goods_types 
+                        WHERE opening_level=(SELECT level FROM shop_data)""").fetchall()
+            level = int(self.cur.execute("""SELECT level FROM shop_data""").fetchall()[0][0])
+
+            self.cur.execute("""UPDATE shop_data
+                        SET money = money - ?""", (level * 30,))
+            self.con.commit()
+            delivery_time = self.cur.execute("""SELECT delivery_time 
+                        FROM transport_types WHERE id=?""", (transport,)).fetchone()[0]
+            delivery_cost = [x[0] for x in self.cur.execute("""SELECT delivery_cost FROM transport_types""").fetchall()]
+            warehouse_names = [''.join(x) for x in self.cur.execute("""SELECT name FROM warehouse""").fetchall()]
+            warehouse_count = [x[0] for x in self.cur.execute("""SELECT count FROM warehouse""").fetchall()]
+
+            for element in res:
+                if element in warehouse_names:
+                    count = randint(1, warehouse_count[warehouse_names.index(element)] + 3)
+                    while ((count - warehouse_count[warehouse_names.index(element)]) * int(element[2]) +
+                           delivery_cost[transport - 1] + level * 30 * delivery_time) >= money:
+                        count = randint(1, warehouse_count[warehouse_names.index(element)] + 3)
+                        if warehouse_count[warehouse_names.index(element)] * int(element[2]) + delivery_cost[
+                            transport - 1] >= money:
+                            count = randint(1, warehouse_count[warehouse_names.index(element)] + 3)
+                            break
+                else:
+                    count = randint(1, element[3] + 1)
+                    while (count * int(element[2]) + delivery_cost[
+                        transport - 1] + level * 30 * delivery_time) >= money:
+                        count = randint(1, element[3] + 1)
+                        if count * int(element[2]) + delivery_cost[transport - 1] >= money:
+                            count = randint(1, element[3] + 1)
+                            break
+                name = choice(self.task_names)
+                self.task_list[int(element[5])].append((name, element[1], count))
+            for index, element in enumerate(self.task_list):
+                while len(self.task_list[index]) > 5:
+                    del self.task_list[index][self.task_list.index(choice(self.task_list[index]))]
+            print(self.task_list)
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
         self.screen.fill((100, 100, 100))
