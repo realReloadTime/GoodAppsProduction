@@ -10,7 +10,7 @@ def label(text, location, font_name='start_shr.ttf', size=50, color='black'):
         font_name = 'text_fonts/' + font_name
     font = pygame.font.Font(font_name, size)
     text_surface = font.render(text, True, pygame.Color(color))
-    return text_surface, location, text_surface.get_width() + location[0], text_surface.get_height() + location[1]
+    return text_surface, location, text_surface.get_width(), text_surface.get_height()
 
 
 class InputBox:

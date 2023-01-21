@@ -1,12 +1,9 @@
-# ЗАДАЧИ  !!!
-
-# Начать разработку дата базы для сохранения данных
-
 import pygame
 from modules import pygame_button, pygame_image, pygame_text
 from win32api import GetSystemMetrics
+import sqlite3
+import shutil
 import os
-import sys
 
 
 class SellAndGive:
@@ -14,7 +11,8 @@ class SellAndGive:
         self.width = GetSystemMetrics(0)
         self.height = GetSystemMetrics(1)
         self.screen = pygame.display.set_mode((self.width, self.height))
-        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Continue', 'Authors']
+        self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Warehouse',
+                            'Logistics', 'Purchase', 'Continue', 'Authors']
 
         self.menu_buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0],
                              ['Выйти', 0]]  # названия и состояния кнопок
@@ -29,9 +27,9 @@ class SellAndGive:
         self.buttons_start_clicked = []  # здесь будет последняя нажатая кнопка при начальном выборе товара
         self.start_text_input = pygame_text.InputBox(self.width - 700, 60, 600, 40, 'ООО"ПродАкшен"')
         start_buttons = [('Начать', (self.width - 300, self.height - 200), '#008000'),
-                         ('Попиты', (200, 200), None),
-                         ('Скрепки', (200, 400), None),
-                         ('Строительный мусор', (200, 600), None)]
+                         ('Попиты', (200, 200), '#e55c5c'),
+                         ('Скрепки', (200, 400), '#e55c5c'),
+                         ('Строительный мусор', (200, 600), '#e55c5c')]
         self.start_buttons_info = {'Попиты': 'Самый ходовой товар в вашем городе, \nможно продавать за соответствующую '
                                              'цену\n'
                                              'Делаются в Китае, поэтому \nцена за оптовые закупки высокая,\n'
@@ -44,14 +42,27 @@ class SellAndGive:
                                                          'Можно найти в окрестностях, \nцена за оптовые закупки '
                                                          'средняя\n'
                                                          'Наличие на вашем складе - 7 штук'}
-        self.icons_desktop_group = pygame.sprite.Group()
-        items =
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
-        desktop_items = ['data/browser.png']
-        for item in desktop_items:
-            pygame_image.Image(item, resize=True, resize_size=(220, 200), background=False)
+        icons_list = ['browser.png', 'warehouse.png', 'logistic.png', 'purchase.png', 'growth_point.png']
+        self.desktop_icons_group = pygame.sprite.Group()
+        pygame_image.Icon('clear_image.png', (self.width - 300, 5), self.desktop_icons_group)
+        for sprite in self.desktop_icons_group.sprites():
+            if sprite.name == 'clear_image.png':
+                sprite.add_text('Следущий день', size=50, color='red')
+        for ind, item in enumerate(icons_list):
+            pygame_image.Icon(item, (5, 5 + 210 * ind), self.desktop_icons_group)
+
+        self.warehouse_icons_groups = pygame.sprite.Group()
+        icons = [('back_to_desktop.png', (self.width - 200, 5))]
+        for icon in icons:
+            pygame_image.Icon(icon[0], icon[1], self.warehouse_icons_groups)
+
+        self.site_buttons_group = pygame.sprite.Group()
+        site_buttons = [('back_to_desktop(site).png', (self.width - 175, 5))]
+        for button in site_buttons:
+            pygame_button.Button(button[0], button[1], 'black', self.site_buttons_group)
 
         self.app_running()
 
@@ -100,17 +111,17 @@ class SellAndGive:
                                 self.menu_button_location[1][0] + self.menu_button_location[1][2] and \
                                 self.menu_button_location[1][1] <= event.pos[1] <= \
                                 self.menu_button_location[1][1] + self.menu_button_location[1][3]:
-                            self.selected_screen = self.all_screens[2]
+                            self.selected_screen = self.all_screens[self.all_screens.index('Continue')]
 
                         # нажатие по кнопке Авторы
                         elif self.menu_button_location[2][0] <= event.pos[0] <= \
                                 self.menu_button_location[2][0] + self.menu_button_location[2][2] and \
                                 self.menu_button_location[2][1] <= event.pos[1] <= \
                                 self.menu_button_location[2][1] + self.menu_button_location[2][3]:
-                            self.selected_screen = self.all_screens[3]
+                            self.selected_screen = self.all_screens[-1]
 
                     # кнопки на стартовом экране
-                    if self.selected_screen == self.all_screens[1]:
+                    elif self.selected_screen == self.all_screens[1]:
                         for button in self.buttons_start_group.sprites():
                             if button.clicked(event.pos) and button.name != 'Начать':
                                 button.tracing = False
@@ -120,8 +131,53 @@ class SellAndGive:
                             elif button.clicked(event.pos) \
                                     and button.name == 'Начать' \
                                     and bool(self.buttons_start_clicked):
-                                self.variant, self.shop_name = self.buttons_start_clicked[0], self.start_text_input.text
+                                if os.path.exists('data/saved_data.db'):
+                                    os.remove('data/saved_data.db')
+                                    shutil.copy('data/data_sample.db', 'data/saved_data.db')
+                                else:
+                                    shutil.copy('data/data_sample.db', 'data/saved_data.db')
+
+                                self.con = sqlite3.connect("data/saved_data.db")
+                                self.cur = self.con.cursor()
+
+                                self.cur.execute("""INSERT INTO shop_data(name, money, transport, 
+                                customers_multiplier, failure_multiplier, price_multiplier, level, day) 
+                                VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
+                                                 (self.start_text_input.text, 1000, 1, 0.5, 0.5, 0.5, 1, 0)).fetchall()
+                                self.con.commit()
+                                if self.buttons_start_clicked[0] == 'Попиты':
+                                    count = 10
+                                elif self.buttons_start_clicked[0] == 'Скрепки':
+                                    count = 20
+                                elif self.buttons_start_clicked[0] == 'Строительный мусор':
+                                    count = 7
+                                self.cur.execute("""INSERT INTO warehouse(name, count) VALUES(?, ?)""",
+                                                 (self.buttons_start_clicked[0], count))
+                                self.con.commit()
                                 self.selected_screen = self.all_screens[2]
+
+                    elif self.selected_screen == self.all_screens[2]:
+                        for icon in self.desktop_icons_group.sprites():
+                            if icon.clicked(event.pos):
+                                if icon.name == 'browser.png':
+                                    self.selected_screen = self.all_screens[3]
+                                elif icon.name == 'warehouse.png':
+                                    self.selected_screen = self.all_screens[4]
+                                elif icon.name == 'logistic.png':
+                                    self.selected_screen = self.all_screens[5]
+                                elif icon.name == 'purchase.png':
+                                    self.selected_screen = self.all_screens[6]
+
+                    elif self.selected_screen == self.all_screens[3]:
+                        for button in self.site_buttons_group.sprites():
+                            if 'back_to' in button.name:
+                                self.selected_screen = self.all_screens[2]
+
+                    elif self.selected_screen == self.all_screens[4]:
+                        for icon in self.warehouse_icons_groups.sprites():
+                            if icon.clicked(event.pos):
+                                if icon.name == 'back_to_desktop.png':
+                                    self.selected_screen = self.all_screens[2]
 
                 if event.type == pygame.MOUSEMOTION:
                     mouse_coords = event.pos
@@ -134,7 +190,7 @@ class SellAndGive:
                             else:
                                 self.menu_buttons[self.menu_button_location.index([x, y, w, h])][1] = 0
 
-                    if self.selected_screen == self.all_screens[1]:
+                    elif self.selected_screen == self.all_screens[1]:
                         for button in self.buttons_start_group.sprites():
                             if button.clicked(event.pos) \
                                     and button.name not in self.buttons_start_clicked \
@@ -145,8 +201,25 @@ class SellAndGive:
                             else:
                                 button.selected = False
                                 button.tracing = False
-                    if self.selected_screen == self.all_screens[2]:
-                        pass
+                    elif self.selected_screen == self.all_screens[2]:
+                        for icon in self.desktop_icons_group.sprites():
+                            if icon.clicked(event.pos):
+                                icon.tracing = True
+                            else:
+                                icon.tracing = False
+                    elif self.selected_screen == self.all_screens[3]:
+                        for button in self.site_buttons_group.sprites():
+                            if button.clicked(event.pos):
+                                button.tracing = True
+                            else:
+                                button.tracing = False
+
+                    elif self.selected_screen == self.all_screens[4]:
+                        for icon in self.warehouse_icons_groups.sprites():
+                            if icon.clicked(event.pos):
+                                icon.tracing = True
+                            else:
+                                icon.tracing = False
 
             if not running:
                 continue
@@ -160,11 +233,27 @@ class SellAndGive:
                     self.start_plot_played = True
                 self.starting_screen()
 
+            elif self.selected_screen == 'Continue':
+                if os.path.exists('data/saved_data.db'):
+                    self.add_cur_and_con()
+                    self.selected_screen = self.all_screens[self.all_screens.index('Desktop')]
+                else:
+                    self.selected_screen = self.all_screens[1]
+
             elif self.selected_screen == 'Desktop':
                 self.desktop_screen()
 
             elif self.selected_screen == 'Site':
-                pass
+                self.site_screen()
+
+            elif self.selected_screen == 'Warehouse':
+                self.warehouse_screen()
+
+            elif self.selected_screen == 'Logistics':
+                self.logistics_screen()
+
+            elif self.selected_screen == 'Purchase':
+                self.purchase_screen()
 
             self.screen.blit(cursor, mouse_coords)
             pygame.display.flip()
@@ -274,11 +363,11 @@ class SellAndGive:
 
     def starting_screen(self):  # здесь будет рисоваться стартовый экран
         screen_background = pygame_image.Image('data/computer_prototype.png')
-        self.screen.blit(screen_background.image, screen_background.rect)
         name_label = pygame_text.label('Введите название магазина:', (self.width - 1250, 50))
-        tip = '\nПОДСКАЗКА: Помните, что завершая день\n'\
-              'На счету должно оставаться как минимум 10 рублей!\n'\
+        tip = '\nПОДСКАЗКА: Помните, что завершая день\n' \
+              'На счету должно оставаться как минимум 10 рублей!\n' \
               'Иначе вы умрете от голода.'
+        self.screen.blit(screen_background.image, screen_background.rect)
         for button in self.buttons_start_group.sprites():
             if button.tracing:
                 pygame.draw.rect(self.screen, pygame.Color(150, 150, 150), (
@@ -300,8 +389,80 @@ class SellAndGive:
         self.buttons_start_group.draw(self.screen)
 
     def desktop_screen(self):  # здесь будет рисоваться "рабочий" стол
-        screen_background = pygame_image.Image('data/desktop.png', resize=False)
-        self.screen.blit(screen_background.image, screen_background.rect)
+        desktop_background = pygame_image.Image('data/desktop.png', resize=True)
+        money = self.cur.execute('''SELECT money FROM shop_data''').fetchone()[0]
+        money_count = pygame_text.label(f'Кошелек: {money} рублей', (self.width, self.height))
+        self.screen.blit(desktop_background.image, desktop_background.rect)
+        self.screen.blit(money_count[0], (money_count[1][0] - money_count[2], money_count[1][1] - money_count[3]))
+        for icon in self.desktop_icons_group:
+            if icon.tracing and icon.name != 'clear_image.png':
+                pygame.draw.rect(self.screen, pygame.Color(200, 200, 200), (
+                    icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]))
+                pygame.draw.rect(self.screen, pygame.Color(0, 0, 0), (
+                    icon.rect[0] + 25, icon.rect[1] + 5, icon.rect[0] + icon.size[0] - 50, icon.size[1]), 3)
+            elif icon.tracing and icon.name == 'clear_image.png':
+                icon.add_text('Следущий день', size=50, color='green')
+            elif not icon.tracing and icon.name == 'clear_image.png':
+                icon.add_text('Следущий день', size=50, color='red')
+
+        self.desktop_icons_group.draw(self.screen)
+
+    def site_screen(self):
+        site_background = pygame_image.Image('data/background_site.png', [0, 0])
+        addres_pic = pygame_image.Image('adress.png', [0, 5], clear_background=True)
+        self.screen.blit(site_background.image, site_background.rect)
+        self.screen.blit(addres_pic.image, addres_pic.rect)
+
+        for button in self.site_buttons_group.sprites():
+            if button.tracing:
+                pygame.draw.rect(self.screen, pygame.Color(150, 150, 20), (
+                    button.coords[0], button.coords[1], button.size[0], button.size[1]), 3)
+
+        shop_name, money = self.cur.execute('''SELECT name, money FROM shop_data''').fetchone()
+        shop_name = pygame_text.label('Интернет-магазин ' + shop_name, (self.width, 150))
+        money_count = pygame_text.label(f'Кошелек: {money} рублей', (self.width, self.height))
+
+        self.site_buttons_group.draw(self.screen)
+        self.screen.blit(shop_name[0], ((shop_name[1][0] - shop_name[2]) // 2, shop_name[1][1]))
+        self.screen.blit(money_count[0], (money_count[1][0] - money_count[2], money_count[1][1] - money_count[3]))
+
+    def warehouse_screen(self):
+        warehouse_background = pygame_image.Image('data/background_storage.png', [0, 0], resize=True)
+        self.screen.blit(warehouse_background.image, warehouse_background.rect)
+        for button in self.warehouse_icons_groups.sprites():
+            if button.tracing:
+                pygame.draw.rect(self.screen, pygame.Color(0, 100, 50), (
+                    button.coords[0] + 20, button.rect[1], 170, button.size[1] - 30), 3)  # координаты верхнего левого
+                # угла, ширина, высота
+        items = self.cur.execute('''SELECT * FROM warehouse''').fetchall()
+        label_total = pygame_text.label('В НАЛИЧИИ', (90, 120), size=70)
+        self.screen.blit(label_total[0], label_total[1])
+        for ind, item in enumerate(items):
+            item = map(str, item)
+            label = pygame_text.label(': '.join(item), (25, 240 + ind * 75))
+            self.screen.blit(label[0], label[1])
+        self.warehouse_icons_groups.draw(self.screen)
+
+    def logistics_screen(self):
+        logistics_background = pygame_image.Image('data/background_logistics.png', [0, 0], resize=True)
+        self.screen.blit(logistics_background.image, logistics_background.rect)
+
+    def purchase_screen(self):
+        purchase_background = pygame_image.Image('data/background_purchase.png', [0, 0], resize=True)
+        self.screen.blit(purchase_background.image, purchase_background.rect)
+
+    def promotion_screen(self):
+        pass
+
+    def growth_point(self):
+        pass
+
+    def vacation_screen(self):
+        pass
+
+    def add_cur_and_con(self):
+        self.con = sqlite3.connect("data/saved_data.db")
+        self.cur = self.con.cursor()
 
     def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
         self.screen.fill((100, 100, 100))
