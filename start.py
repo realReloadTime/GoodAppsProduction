@@ -5,7 +5,7 @@ import sqlite3
 import shutil
 import os
 from random import randint, choice
-
+# f
 
 class SellAndGive:
     def __init__(self):
