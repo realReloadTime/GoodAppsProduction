@@ -74,3 +74,8 @@ class Button(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, text_surface.get_size())
         self.image.blit(text_surface, (0, 0))
         self.size = self.image.get_width(), self.image.get_height()
+
+    def cross(self):
+        self.image = clear_and_load_image('clear_image.png', -1)
+        self.size = 0, 0
+        self.coords = 0, 0
