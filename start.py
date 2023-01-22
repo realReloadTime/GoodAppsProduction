@@ -403,10 +403,11 @@ class SellAndGive:
                 if os.path.exists('data/saved_data.db'):
                     self.add_cur_and_con()
                     self.selected_screen = self.all_screens[self.all_screens.index('Desktop')]
+                    self.goods = self.cur.execute(
+                        """SELECT * FROM goods_types WHERE opening_level BETWEEN 1 and (SELECT level FROM shop_data)""").fetchall()
                 else:
                     self.selected_screen = self.all_screens[1]
-                self.goods = self.cur.execute(
-                    """SELECT * FROM goods_types WHERE opening_level BETWEEN 1 and (SELECT level FROM shop_data)""").fetchall()
+
 
             elif self.selected_screen == 'Desktop':
                 self.desktop_screen()
