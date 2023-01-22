@@ -13,7 +13,7 @@ class SellAndGive:
         self.height = GetSystemMetrics(1)
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Warehouse',
-                            'Logistics', 'Purchase', 'Continue', 'Authors']
+                            'Logistics', 'Purchase', 'Continue', 'Authors', 'Growth']
 
         self.menu_buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0],
                              ['Выйти', 0]]  # названия и состояния кнопок
@@ -26,6 +26,7 @@ class SellAndGive:
         self.text = ''
         self.warehouse_status = ''
         self.purchase_status = ''
+        self.transport_index = 0
 
         self.tasks = [False for _ in range(5)]
 
@@ -61,14 +62,18 @@ class SellAndGive:
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
-        icons_list = ['browser.png', 'warehouse.png', 'logistic.png', 'purchase.png', 'growth_point.png']
+        icons_list = ['browser.png', 'warehouse.png', 'logistic.png', 'purchase.png', 'growth_point.png', 'vacation.png']
         self.desktop_icons_group = pygame.sprite.Group()
         pygame_image.Icon('clear_image.png', (self.width - 350, 5), self.desktop_icons_group)
         for sprite in self.desktop_icons_group.sprites():
             if sprite.name == 'clear_image.png':
                 sprite.add_text('Следующий день', size=50, color='red')
         for ind, item in enumerate(icons_list):
-            pygame_image.Icon(item, (5, 5 + 210 * ind), self.desktop_icons_group)
+            if item != 'vacation.png':
+                pygame_image.Icon(item, (5, 5 + 210 * ind), self.desktop_icons_group)
+            else:
+                pygame_image.Icon(item, (self.width - 300, 100), self.desktop_icons_group)
+        self.desktop_status = ''
 
         self.warehouse_icons_groups = pygame.sprite.Group()
         icons = [('back_to_desktop.png', (self.width - 225, 5))]
@@ -81,6 +86,23 @@ class SellAndGive:
         for icon in buttons:
             pygame_image.Icon(icon[0], icon[1], self.purchase_buttons_group)
         self.goods = []
+        self.logistics_buttons_group = pygame.sprite.Group()
+        buttons = [('back_to_desktop.png', (self.width - 225, 5)), ('left_arrow.png', (self.width - 1325, self.height // 2 - 100)),
+                   ('right_arrow.png', (self.width - 825, self.height // 2 - 100))]
+        for icon in buttons:
+            pygame_image.Icon(icon[0], icon[1], self.logistics_buttons_group)
+        pygame_button.Button(f'Купить за 1100 рублей', (self.width // 2 - 400, self.height - 400), 'black', self.logistics_buttons_group)
+        self.logistics_status = ''
+        self.growth_buttons_group = pygame.sprite.Group()
+        buttons = [('back_to_desktop.png', (self.width - 225, 5)),
+                   ('left_arrow.png', (250, self.height // 2 - 100)),
+                   ('right_arrow.png', (self.width - 500, self.height // 2 - 100))]
+        pygame_button.Button(f'Купить за 1000 рублей', (self.width // 2 - 450, self.height - 150), 'black',
+                             self.growth_buttons_group)
+        for icon in buttons:
+            pygame_image.Icon(icon[0], icon[1], self.growth_buttons_group)
+        self.growth_count = 0
+        self.growth_status = ''
 
         self.app_running()
 
@@ -188,6 +210,14 @@ class SellAndGive:
                                     self.selected_screen = self.all_screens[6]
                                 elif icon.name == 'clear_image.png':
                                     self.next_day()
+                                elif icon.name == 'growth_point.png':
+                                    self.selected_screen = self.all_screens[-1]
+                                elif icon.name == 'vacation.png':
+                                    money = self.cur.execute("""SELECT money FROM shop_data""").fetchone()[0]
+                                    if money >= 100000:
+                                        self.vacation_screen()
+                                    else:
+                                        self.desktop_status = 'Чтобы отправиться в отпуск нужно накопить 100 тысяч рублей'
 
                     elif self.selected_screen == self.all_screens[3]:
                         for button in self.site_buttons_group.sprites():
@@ -226,6 +256,36 @@ class SellAndGive:
                                 if icon.name == 'back_to_desktop.png':
                                     self.selected_screen = self.all_screens[2]
 
+                    elif self.selected_screen == self.all_screens[5]:
+                        for icon in self.logistics_buttons_group.sprites():
+                            if icon.clicked(event.pos):
+                                if icon.name == 'back_to_desktop.png':
+                                    self.selected_screen = self.all_screens[2]
+                                    self.logistics_status = ''
+                                elif icon.name == 'left_arrow.png':
+                                    self.transport_index -= 1
+                                elif icon.name == 'right_arrow.png':
+                                    self.transport_index += 1
+                                elif 'Купить' in icon.name and icon.clicked(event.pos):
+                                    money = self.cur.execute("""SELECT money FROM shop_data""").fetchone()[0]
+                                    transport = self.cur.execute("""SELECT name FROM transport_types WHERE price = ?""", (int(icon.name.split()[-2]), )).fetchone()[0]
+                                    if money >= int(icon.name.split()[-2]):
+                                        self.cur.execute("""UPDATE shop_data SET transport = (SELECT id FROM transport_types WHERE name = ?)""", (transport, ))
+                                        self.con.commit()
+                                        self.logistics_status = 'Успешная покупка'
+
+                                    else:
+                                        self.logistics_status = 'Недостаточно средств для покупки'
+
+                            if 'Купить' in icon.name:
+                                self.logistics_buttons_group.remove(icon)
+                                my_transport = self.cur.execute("""SELECT transport FROM shop_data""").fetchone()[0]
+                                transport_kinds = self.cur.execute("""SELECT price FROM transport_types WHERE id != ?""",
+                                                                   (my_transport,)).fetchall()
+
+                                self.transport_index = self.transport_index % len(transport_kinds)
+                                pygame_button.Button(f'Купить за {str(transport_kinds[self.transport_index][0])} рублей', (self.width // 2 - 420, self.height - 400), 'black', self.logistics_buttons_group)
+
                     elif self.selected_screen == self.all_screens[6]:
                         for icon in self.purchase_buttons_group.sprites():
                             if icon.clicked(event.pos):
@@ -234,6 +294,42 @@ class SellAndGive:
                                     self.purchase_status = ''
                                 else:
                                     self.buying_process(icon.name)
+
+                    elif self.selected_screen == self.all_screens[-1]:
+                        for icon in self.growth_buttons_group.sprites():
+                            if icon.clicked(event.pos):
+                                if icon.name == 'back_to_desktop.png':
+                                    self.selected_screen = self.all_screens[2]
+                                    self.growth_status = ''
+                                elif icon.name == 'left_arrow.png':
+                                    self.growth_count -= 1
+                                elif icon.name == 'right_arrow.png':
+                                    self.growth_count += 1
+                                elif 'Купить' in icon.name and icon.clicked(event.pos):
+                                    money = self.cur.execute("""SELECT money FROM shop_data""").fetchone()[0]
+                                    growth_kinds = self.cur.execute(
+                                        """SELECT cost, name FROM business_levels WHERE id != (SELECT level FROM shop_data)""").fetchall()
+                                    cost = int(growth_kinds[self.growth_count][0])
+
+                                    if money >= cost:
+                                        self.cur.execute("""UPDATE shop_data SET money = ?, level = (SELECT id FROM business_levels WHERE name = ?)""", (money - cost, growth_kinds[self.growth_count][1]))
+                                        self.con.commit()
+                                        self.growth_status = 'Успешная покупка'
+
+                                    else:
+                                        self.growth_status = 'Недостаточно средств для покупки'
+
+                            if 'Купить' in icon.name:
+                                self.growth_buttons_group.remove(icon)
+                                growth_kinds = self.cur.execute("""SELECT cost FROM business_levels WHERE id != (SELECT level FROM shop_data)""").fetchall()
+                                self.growth_count = self.growth_count % len(growth_kinds)
+                                cost = int(growth_kinds[self.growth_count][0])
+
+                                pygame_button.Button(
+                                    f'Купить за {str(cost)} рублей',
+                                    (self.width // 2 - 450, self.height - 150), 'black', self.growth_buttons_group)
+
+
 
                 if event.type == pygame.MOUSEMOTION:
                     mouse_coords = event.pos
@@ -284,6 +380,13 @@ class SellAndGive:
                             else:
                                 icon.tracing = False
 
+                    elif self.selected_screen == self.all_screens[-1]:
+                        for icon in self.growth_buttons_group.sprites():
+                            if icon.clicked(event.pos):
+                                icon.tracing = True
+                            else:
+                                icon.tracing = False
+
             if not running:
                 continue
 
@@ -319,6 +422,9 @@ class SellAndGive:
 
             elif self.selected_screen == 'Purchase':
                 self.purchase_screen()
+
+            elif self.selected_screen == 'Growth':
+                self.growth_point()
 
             self.screen.blit(cursor, mouse_coords)
             pygame.display.flip()
@@ -556,8 +662,20 @@ class SellAndGive:
         self.warehouse_icons_groups.draw(self.screen)
 
     def logistics_screen(self):
-        logistics_background = pygame_image.Image('data/background_logistics.png', [0, 0], resize=True)
+        logistics_background = pygame_image.Image('data/background_logistic.png', [0, 0], resize=True)
         self.screen.blit(logistics_background.image, logistics_background.rect)
+        my_transport = self.cur.execute("""SELECT transport FROM shop_data""").fetchone()[0]
+        transport_kinds = self.cur.execute("""SELECT * FROM transport_types WHERE id != ?""", (my_transport, )).fetchall()
+        transport = pygame_text.label(transport_kinds[self.transport_index][1],
+                                      (self.width // 2 - 180, self.height // 2 - 65), size=100)
+        delivery_time = pygame_text.label(f'Время доставки: {transport_kinds[self.transport_index][3]}', (self.width // 2 - 400, self.height - 290))
+        delivery_price = pygame_text.label(f'Цена доставки: {transport_kinds[self.transport_index][4]}', (self.width // 2 - 400, self.height - 240))
+        self.screen.blit(delivery_time[0], delivery_time[1])
+        self.screen.blit(delivery_price[0], delivery_price[1])
+        self.logistics_buttons_group.draw(self.screen)
+        self.screen.blit(transport[0], transport[1])
+        label = pygame_text.label(self.logistics_status, (10, self.height - 100))
+        self.screen.blit(label[0], label[1])
 
     def purchase_screen(self):
         purchase_background = pygame_image.Image('data/background_purchase.png', [0, 0], resize=True)
@@ -593,23 +711,52 @@ class SellAndGive:
         else:
             self.purchase_status = f'Ошибка, не хватает денег или места на складе. Текущая вместимость: {capacity}'
 
-
-
     def goods_today(self):
         self.goods = self.cur.execute(
             """SELECT * FROM goods_types WHERE opening_level BETWEEN 1 and (SELECT level FROM shop_data)""").fetchall()
         while len(self.goods) > 5:
             del self.goods[randint(0, len(self.goods) - 1)]
 
-
     def promotion_screen(self):
         pass
 
     def growth_point(self):
-        pass
+        growth_kinds = self.cur.execute("""SELECT * FROM business_levels WHERE id != (SELECT level FROM shop_data)""").fetchall()
+        growth_point_background = pygame_image.Image('data/hangar.png', [0, 0], resize=True)
+        self.screen.blit(growth_point_background.image, growth_point_background.rect)
+        self.growth_count = self.growth_count % len(growth_kinds)
+        level = pygame_text.label(growth_kinds[self.growth_count][1],
+                                      (self.width // 2 - 550, self.height // 2 - 65), size=100)
+        capacity = pygame_text.label(f'Вместимость: {growth_kinds[self.growth_count][2]}',
+                                           (self.width // 2 - 600, self.height - 350))
+        for button in self.growth_buttons_group.sprites():
+            if button.tracing and button.name != 'right_arrow.png' and button.name != 'left_arrow.png':
+                pygame.draw.rect(self.screen, pygame.Color(255, 255, 255), (
+                    button.coords[0] - 5, button.coords[1], button.size[0], button.size[1]))
+                pygame.draw.rect(self.screen, pygame.Color(0, 0, 0), (
+                    button.coords[0] - 5, button.coords[1], button.size[0], button.size[1]), 2)
+
+        label = pygame_text.label(self.growth_status, (10, self.height - 204))
+        self.screen.blit(label[0], label[1])
+
+        self.growth_buttons_group.draw(self.screen)
+        self.screen.blit(level[0], level[1])
+        self.screen.blit(capacity[0], capacity[1])
 
     def vacation_screen(self):
-        pass
+        coords = [0, self.height]
+        clock = pygame.time.Clock()
+        while coords[1] > -20:
+            game_over = pygame_image.Image('data/over.png', coords)
+            self.screen.blit(game_over.image, game_over.rect)
+            pygame.display.flip()
+            coords[1] -= 20
+            clock.tick(20)
+        for i in range(10):
+            clock.tick(1)
+        self.selected_screen = self.all_screens[2]
+        self.cur.execute("""UPDATE shop_data SET money = money - 100000""")
+        self.con.commit()
 
     def add_cur_and_con(self):
         self.con = sqlite3.connect("data/saved_data.db")
