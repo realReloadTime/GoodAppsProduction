@@ -577,6 +577,8 @@ class SellAndGive:
             elif not icon.tracing and icon.name == 'clear_image.png':
                 icon.add_text('Следующий день', size=50, color='red')
         self.text = ''
+        label = pygame_text.label(self.desktop_status, (self.width - 500, self.height - 10))
+        self.screen.blit(label[0], label[1])
 
         self.desktop_icons_group.draw(self.screen)
 
