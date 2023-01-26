@@ -7,9 +7,6 @@ import os
 from random import randint, choice
 
 
-# f
-
-
 class SellAndGive:
     def __init__(self):
         self.width = GetSystemMetrics(0)
@@ -109,6 +106,11 @@ class SellAndGive:
             pygame_image.Icon(icon[0], icon[1], self.growth_buttons_group)
         self.growth_count = 0
         self.growth_status = ''
+
+        pygame.mixer.pre_init(44100, -16, 2, 2048)  # setup mixer to avoid sound lag
+        pygame.mixer.init()
+        pygame.mixer.music.load('data/background_music.mp3')
+        pygame.mixer.music.play(-1)
 
         self.app_running()
 
