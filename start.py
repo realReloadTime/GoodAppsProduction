@@ -113,10 +113,15 @@ class SellAndGive:
         pygame.init()
         mouse_coords = (0, 0)
 
+        pygame.mixer.music.load('data/background_music.mp3')
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.1)
+
         pygame.display.set_caption('Продай и отдай')
         pygame.mouse.set_visible(False)
         clock = pygame.time.Clock()
         running = True
+        fl_pause = False
 
         cursor = pygame_image.load_image('translucent_pixel.png', -1)
         cursor = pygame.transform.scale(cursor, (40, 50))
@@ -129,6 +134,14 @@ class SellAndGive:
                         event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:  # выход на кнопку ESC
                     self.app_end()
                     running = False
+
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSLASH:
+                        fl_pause = not fl_pause
+                        if fl_pause:
+                            pygame.mixer.music.pause()
+                        else:
+                            pygame.mixer.music.unpause()
 
                 if event.type == pygame.MOUSEBUTTONUP:  # проверка нажатия мыши
 
@@ -481,6 +494,7 @@ class SellAndGive:
         text = font.render('Выход', True, (225, 225, 200))
         text_x = self.width - text.get_width() - 20
         text_y = self.height - text.get_height() - 20
+        music = font.render("Нажмите \ для включения/выключения звука", True, (225, 225, 200))
         text_w = text.get_width()
         text_h = text.get_height()
         if len(self.menu_button_location) != 4:
@@ -492,6 +506,7 @@ class SellAndGive:
             pygame.draw.rect(self.screen, (50, 50, 255), (text_x - 10, text_y - 10,
                                                           text_w + 20, text_h + 20), 0)
 
+        self.screen.blit(music, (self.width - (self.width - 10), self.height - 80))
         self.screen.blit(text, (text_x, text_y))
 
     def start_plot(self):  # показ сюжета
