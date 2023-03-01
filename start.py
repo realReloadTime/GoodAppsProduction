@@ -9,34 +9,40 @@ from random import randint, choice
 
 class SellAndGive:
     def __init__(self):
-        self.width = GetSystemMetrics(0)
-        self.height = GetSystemMetrics(1)
+        self.width, self.height = GetSystemMetrics(0), GetSystemMetrics(1)  # размеры экрана для верного отображения
         self.screen = pygame.display.set_mode((self.width, self.height))
+
+        # список для отслеживания и  управления экранами
         self.all_screens = ['MainMenu', 'NewGameScreen', 'Desktop', 'Site', 'Warehouse',
                             'Logistics', 'Purchase', 'Continue', 'Authors', 'Growth']
 
+        # кнопки для меню
         self.menu_buttons = [['Новая игра', 0], ['Продолжить', 0], ['Авторы', 0],
                              ['Выйти', 0]]  # названия и состояния кнопок
 
-        self.menu_button_location = []  # ЗАПИСЬ ПО СХЕМЕ
+        # начальная реализация кнопок
+        # ЗАПИСЬ ПО СХЕМЕ
         # [x0 - обводка, y0 - обводка, ширина + обводка, высота + обводка] (заполняется в программе)
+        self.menu_button_location = []
 
-        self.selected_screen = self.all_screens[0]
+        self.selected_screen = self.all_screens[0]  # управляющий экраном
         self.start_plot_played = False  # флаг проверки проигрыша сюжета
-        self.text = ''
+        self.text = ''  # статус заказа (формируется во время действий пользователя)
         self.warehouse_status = ''
         self.purchase_status = ''
-        self.transport_index = 0
+        self.transport_index = 0  # текущий транспорт (по умолчанию - 0, учитывается ДБ)
 
-        self.tasks = [False for _ in range(5)]
+        self.tasks = [False for _ in range(5)]  # список со всеми заказами
 
         self.buttons_start_group = pygame.sprite.Group()
-        self.buttons_start_clicked = []  # здесь будет последняя нажатая кнопка при начальном выборе товара
+        self.buttons_start_clicked = []  # нажатая кнопка при начальном выборе товаров (реализация радиокнопки)
         self.start_text_input = pygame_text.InputBox(self.width - 700, 60, 600, 40, 'ООО"ПродАкшен"')
         start_buttons = [('Начать', (self.width - 300, self.height - 200), '#008000'),
                          ('Попиты', (200, 200), '#e55c5c'),
                          ('Скрепки', (200, 400), '#e55c5c'),
                          ('Строительный мусор', (200, 600), '#e55c5c')]
+
+        # блок ИНФОРМАЦИОННЫХ ПЕРЕМЕННЫХ
         self.start_buttons_info = {'Попиты': 'Самый ходовой товар в вашем городе, \nможно продавать за соответствующую '
                                              'цену\n'
                                              'Делаются в Китае, поэтому \nцена за оптовые закупки высокая,\n'
@@ -59,6 +65,11 @@ class SellAndGive:
                            'Оксана 100м.', 'Аверкий', 'Тётя Ева', 'Диана', 'Вивея', 'Артём', 'Тихон', 'Самсон',
                            'Полерия', 'Ангелина', 'Регина', 'Ульяна', 'Олег']
         self.customers_count = 0
+        self.growth_count = 0
+        self.growth_status = ''
+        # ----
+
+        # блок ЗАПОЛНЕНИЯ КНОПОК
         for button in start_buttons:
             pygame_button.Button(button[0], button[1], button[2], self.buttons_start_group)
 
@@ -104,27 +115,27 @@ class SellAndGive:
                              self.growth_buttons_group)
         for icon in buttons:
             pygame_image.Icon(icon[0], icon[1], self.growth_buttons_group)
-        self.growth_count = 0
-        self.growth_status = ''
+        # ----
 
         self.app_running()
 
     def app_running(self):  # старт и работа приложения
         pygame.init()
+
+        pygame.display.set_caption('Продай и отдай')
         mouse_coords = (0, 0)
 
         pygame.mixer.music.load('data/background_music.mp3')
         pygame.mixer.music.play(-1)
         pygame.mixer.music.set_volume(0.1)
 
-        pygame.display.set_caption('Продай и отдай')
-        pygame.mouse.set_visible(False)
-        clock = pygame.time.Clock()
-        running = True
-        fl_pause = False
-
+        pygame.mouse.set_visible(False)  # при использовании мыши ОС повышается производительность(убрать?)
         cursor = pygame_image.load_image('translucent_pixel.png', -1)
         cursor = pygame.transform.scale(cursor, (40, 50))
+
+        clock = pygame.time.Clock()
+        running = True
+        fl_pause = False  # флаг управления музыкой
 
         while running:
             for event in pygame.event.get():
@@ -174,7 +185,7 @@ class SellAndGive:
                                 self.menu_button_location[2][0] + self.menu_button_location[2][2] and \
                                 self.menu_button_location[2][1] <= event.pos[1] <= \
                                 self.menu_button_location[2][1] + self.menu_button_location[2][3]:
-                            self.selected_screen = self.all_screens[-1]
+                            self.selected_screen = self.all_screens[8]
 
                     # кнопки на стартовом экране
                     elif self.selected_screen == self.all_screens[1]:
@@ -257,7 +268,7 @@ class SellAndGive:
                                         self.con.commit()
                                         self.text += f'заказ #{number} доставляется'
                                         income = self.cur.execute("""SELECT sale_price FROM goods_types WHERE name=?""",
-                                                                  (item, )).fetchone()[0] * customers[number - 1][1]
+                                                                  (item,)).fetchone()[0] * customers[number - 1][1]
                                         self.cur.execute("""INSERT INTO delivery_process(name, income, arrive) 
                                         VALUES (?, ?, (SELECT delivery_time FROM transport_types 
                                         WHERE id=(SELECT transport FROM shop_data)))""", (item, income))
@@ -290,11 +301,11 @@ class SellAndGive:
                                 elif 'Купить' in icon.name and icon.clicked(event.pos):
                                     money = self.cur.execute("""SELECT money FROM shop_data""").fetchone()[0]
                                     transport = self.cur.execute("""SELECT name FROM transport_types WHERE price = ?""",
-                                                                 (int(icon.name.split()[-2]), )).fetchone()[0]
+                                                                 (int(icon.name.split()[-2]),)).fetchone()[0]
                                     if money >= int(icon.name.split()[-2]):
                                         self.cur.execute("""UPDATE shop_data 
                                         SET transport = (SELECT id FROM transport_types WHERE name = ?)""",
-                                                         (transport, ))
+                                                         (transport,))
                                         self.con.commit()
                                         self.logistics_status = 'Успешная покупка'
 
@@ -409,6 +420,12 @@ class SellAndGive:
                             else:
                                 icon.tracing = False
 
+                    elif self.selected_screen == self.all_screens[8]:
+                        print('---\nrealReloadTime - https://github.com/realReloadTime\n'
+                              'Unl1te - https://github.com/Unl1te\n'
+                              'НАДЕЕМСЯ ВАМ ПОНРАВИЛАСЬ НАША ИГРА!')
+                        self.selected_screen = 'Continue'
+
                     elif self.selected_screen == self.all_screens[-1]:
                         for icon in self.growth_buttons_group.sprites():
                             if icon.clicked(event.pos):
@@ -494,9 +511,9 @@ class SellAndGive:
         text = font.render('Выход', True, (225, 225, 200))
         text_x = self.width - text.get_width() - 20
         text_y = self.height - text.get_height() - 20
-        music = font.render("Нажмите \ для включения/выключения звука", True, (225, 225, 200))
         text_w = text.get_width()
         text_h = text.get_height()
+
         if len(self.menu_button_location) != 4:
             self.menu_button_location.append([text_x - 10, text_y - 10, text_w + 20, text_h + 20])
         if self.menu_buttons[3][1] == 0:
@@ -506,7 +523,10 @@ class SellAndGive:
             pygame.draw.rect(self.screen, (50, 50, 255), (text_x - 10, text_y - 10,
                                                           text_w + 20, text_h + 20), 0)
 
-        self.screen.blit(music, (self.width - (self.width - 10), self.height - 80))
+        font = pygame.font.Font(None, 50)
+        music = font.render("Нажмите кнопку '\\' для включения/выключения музыки", True, (225, 225, 200))
+
+        self.screen.blit(music, (self.width - (self.width - 10), self.height - music.get_height() - 10))
         self.screen.blit(text, (text_x, text_y))
 
     def start_plot(self):  # показ сюжета
@@ -706,7 +726,7 @@ class SellAndGive:
         self.screen.blit(logistics_background.image, logistics_background.rect)
         my_transport = self.cur.execute("""SELECT transport FROM shop_data""").fetchone()[0]
         transport_kinds = self.cur.execute("""SELECT * FROM transport_types 
-        WHERE id != ?""", (my_transport, )).fetchall()
+        WHERE id != ?""", (my_transport,)).fetchall()
         transport = pygame_text.label(transport_kinds[self.transport_index][1],
                                       (self.width // 2 - 180, self.height // 2 - 65), size=100)
         delivery_time = pygame_text.label(f'Время доставки: {transport_kinds[self.transport_index][3]}',
@@ -738,9 +758,9 @@ class SellAndGive:
         money, level = self.cur.execute("""SELECT money, level FROM shop_data""").fetchone()
         money, level = int(money), int(level)
         name = name.split('>')[0][1:]
-        capacity = self.cur.execute("""SELECT capacity FROM business_levels WHERE id = ?""", (level, )).fetchone()[0]
+        capacity = self.cur.execute("""SELECT capacity FROM business_levels WHERE id = ?""", (level,)).fetchone()[0]
         price, count = self.cur.execute("""SELECT purchase_price, purchase_count FROM goods_types 
-        WHERE name = ?""", (name, )).fetchone()
+        WHERE name = ?""", (name,)).fetchone()
         warehouse = self.cur.execute("""SELECT * FROM warehouse""").fetchall()
         capacity_count = sum([x[1] for x in warehouse])
         not_in_warehouse = not any(name == x[0] for x in warehouse)
@@ -752,7 +772,7 @@ class SellAndGive:
                 self.cur.execute("""UPDATE warehouse SET count = count + ? WHERE name = ?""", (count, name))
                 self.con.commit()
             self.purchase_status = 'Успешно куплено'
-            self.cur.execute("""UPDATE shop_data SET money = money - ?""", (price, ))
+            self.cur.execute("""UPDATE shop_data SET money = money - ?""", (price,))
         else:
             self.purchase_status = f'Ошибка, не хватает денег или места на складе. Текущая вместимость: {capacity}'
 
@@ -828,9 +848,9 @@ class SellAndGive:
                     plus += element[2]
                     self.warehouse_status += f'Товар {element[1]} доставлен.\nПрибыль: {element[2]}\n\n'
             self.cur.execute("""UPDATE shop_data 
-            SET money = money + ?""", (plus, ))
+            SET money = money + ?""", (plus,))
             self.con.commit()
-            self.task_list = [[] for i in range(6)]
+            self.task_list = [[] for _ in range(6)]
             res = self.cur.execute("""SELECT * FROM goods_types 
             WHERE opening_level BETWEEN 1 AND (SELECT level FROM shop_data)""").fetchall()
             while len(res) > 5:
@@ -838,10 +858,10 @@ class SellAndGive:
             level = int(self.cur.execute("""SELECT level FROM shop_data""").fetchall()[0][0])
 
             self.cur.execute("""UPDATE shop_data
-            SET money = money - ?""", (level * 30, ))
+            SET money = money - ?""", (level * 30,))
             self.con.commit()
             delivery_time = self.cur.execute("""SELECT delivery_time 
-            FROM transport_types WHERE id=?""", (transport, )).fetchone()[0]
+            FROM transport_types WHERE id=?""", (transport,)).fetchone()[0]
             delivery_cost = [x[0] for x in self.cur.execute("""SELECT delivery_cost FROM transport_types""").fetchall()]
             warehouse_names = [''.join(x) for x in self.cur.execute("""SELECT name FROM warehouse""").fetchall()]
             warehouse_count = [x[0] for x in self.cur.execute("""SELECT count FROM warehouse""").fetchall()]
@@ -852,7 +872,7 @@ class SellAndGive:
                     while ((count - warehouse_count[warehouse_names.index(element)]) * int(element[2]) +
                            delivery_cost[transport - 1] + level * 30 * delivery_time) >= money:
                         count = randint(1, warehouse_count[warehouse_names.index(element)] + 3)
-                        if warehouse_count[warehouse_names.index(element)] * int(element[2]) +\
+                        if warehouse_count[warehouse_names.index(element)] * int(element[2]) + \
                                 delivery_cost[transport - 1] >= money:
                             count = randint(1, warehouse_count[warehouse_names.index(element)] + 3)
                             break
@@ -879,7 +899,7 @@ class SellAndGive:
         else:
             self.game_over()
 
-    def game_over(self):
+    def game_over(self):  # запускается при отриц балансе
         coords = [self.width, 0]
         clock = pygame.time.Clock()
         while coords[0] > -20:
@@ -894,7 +914,7 @@ class SellAndGive:
         os.remove('data/saved_data.db')
         self.selected_screen = self.all_screens[0]
 
-    def app_end(self):  # действия при завершении работы(для сохранения данных и вывода завершающей анимации)
+    def app_end(self):  # действия при завершении работы
         self.screen.fill((100, 100, 100))
         pygame.display.flip()
         pygame.quit()
